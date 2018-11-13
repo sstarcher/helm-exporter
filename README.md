@@ -14,17 +14,17 @@ Exports helm release, chart, and version staistics in the prometheus format.
 
 # Format
 ```
-helm_chart_info{chart="ark",release="ark",version="1.2.1"} 1
-helm_chart_info{chart="cluster-autoscaler",release="cluster-autoscaler",version="0.7.0"} 4
-helm_chart_info{chart="dex",release="dex",version="0.1.0"} 1
+helm_chart_info{chart="ark",release="ark",version="1.2.1",namespace="test"} 1
+helm_chart_info{chart="cluster-autoscaler",release="cluster-autoscaler",version="0.7.0",namespace="other"} 4
+helm_chart_info{chart="dex",release="dex",version="0.1.0",namespace="test"} 1
 ```
 
-The metric value is the helm status code.
+The metric value is the helm status code.  These status codes indexes do not map up directly to helm.  This is so I can make the bad cases negative values.
+* -1 FAILED
 * 0 UNKNOWN
 * 1 DEPLOYED
 * 2 DELETED
 * 3 SUPERSEDED
-* 4 FAILED
 * 5 DELETING
 * 6 PENDING_INSTALL
 * 7 PENDING_UPGRADE

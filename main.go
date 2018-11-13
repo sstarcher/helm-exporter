@@ -23,6 +23,7 @@ var (
 		"chart",
 		"release",
 		"version",
+		"namespace",
 	})
 
 	client = NewClient()
@@ -90,9 +91,13 @@ func helmStats() {
 		for _, item := range filterList(items.GetReleases()) {
 			chart := item.GetChart().GetMetadata().GetName()
 			status := item.GetInfo().GetStatus().GetCode()
-			release := item.GetName()
+			releaseName := item.GetName()
 			version := item.GetChart().GetMetadata().GetVersion()
-			stats.WithLabelValues(chart, release, version).Set(float64(status))
+			namespace := item.GetNamespace()
+			if status == release.Status_FAILED {
+				status = -1
+			}
+			stats.WithLabelValues(chart, releaseName, version, namespace).Set(float64(status))
 		}
 	}
 }
