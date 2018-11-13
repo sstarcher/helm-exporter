@@ -3,7 +3,7 @@ replicaCount: 1
 image:
   repository: sstarcher/helm-exporter
   tag: latest
-  pullPolicy: IfNotPresent
+  pullPolicy: Always
 
 nameOverride: ""
 fullnameOverride: ""
