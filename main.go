@@ -1,11 +1,14 @@
 package main
 
 import (
+	"fmt"
 	"time"
 
 	"net/http"
 
 	"k8s.io/helm/pkg/helm"
+
+	"k8s.io/helm/pkg/proto/hapi/release"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
@@ -23,35 +26,82 @@ var (
 	})
 
 	client = NewClient()
+
+	inClusterTiller = "tiller-deploy.kube-system:44134"
+	localTiller     = "127.0.0.1:44134"
+	statusCodes     = []release.Status_Code{
+		release.Status_UNKNOWN,
+		release.Status_DEPLOYED,
+		release.Status_DELETED,
+		release.Status_DELETING,
+		release.Status_FAILED,
+		release.Status_PENDING_INSTALL,
+		release.Status_PENDING_UPGRADE,
+		release.Status_PENDING_ROLLBACK,
+	}
 )
 
-func HelmStats() {
-	items, err := client.ListReleases()
-	if err == nil {
-		for _, item := range items.GetReleases() {
-			stats.WithLabelValues(item.GetChart().GetMetadata().GetName(), item.GetName(), item.GetChart().GetMetadata().GetVersion()).Set(1)
-		}
-	}
-}
-
 func NewClient() *helm.Client {
-	client := helm.NewClient(helm.Host("tiller-deploy.kube-system:44134"))
+	fmt.Printf("attempting to connect to %s\n", inClusterTiller)
+	client := helm.NewClient(helm.Host(inClusterTiller))
 	err := client.PingTiller()
 	if err != nil {
-		client = helm.NewClient(helm.Host("127.0.0.1:44134"))
+		fmt.Printf("attempting to connect to %s\n", localTiller)
+		client = helm.NewClient(helm.Host(localTiller))
 		err := client.PingTiller()
 		if err != nil {
-			panic("unable to connect to 127.0.0.1:44134 and tiller-deploy.kube-system:44134")
+			panic(fmt.Sprintf("unable to connect to %s and %s\n", inClusterTiller, localTiller))
+		}
+		fmt.Printf("connected to %s\n", localTiller)
+		return client
+	}
+	fmt.Printf("connected to %s\n", inClusterTiller)
+	return client
+}
+
+// Taken from https://github.com/helm/helm/blob/master/cmd/helm/list.go#L197
+// filterList returns a list scrubbed of old releases.
+func filterList(rels []*release.Release) []*release.Release {
+	idx := map[string]int32{}
+
+	for _, r := range rels {
+		name, version := r.GetName(), r.GetVersion()
+		if max, ok := idx[name]; ok {
+			// check if we have a greater version already
+			if max > version {
+				continue
+			}
+		}
+		idx[name] = version
+	}
+
+	uniq := make([]*release.Release, 0, len(idx))
+	for _, r := range rels {
+		if idx[r.GetName()] == r.GetVersion() {
+			uniq = append(uniq, r)
 		}
 	}
-	return client
+	return uniq
+}
+
+func helmStats() {
+	items, err := client.ListReleases(helm.ReleaseListStatuses(statusCodes))
+	if err == nil {
+		for _, item := range filterList(items.GetReleases()) {
+			chart := item.GetChart().GetMetadata().GetName()
+			status := item.GetInfo().GetStatus().GetCode()
+			release := item.GetName()
+			version := item.GetChart().GetMetadata().GetVersion()
+			stats.WithLabelValues(chart, release, version).Set(float64(status))
+		}
+	}
 }
 
 func main() {
 	go func() {
 		for {
-			HelmStats()
-			time.Sleep(2 * time.Second)
+			helmStats()
+			time.Sleep(30 * time.Second)
 		}
 	}()
 
