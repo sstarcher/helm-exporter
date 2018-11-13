@@ -1,7 +1,7 @@
 replicaCount: 1
 
 image:
-  repository: sstarcher/helm_exporter
+  repository: sstarcher/helm-exporter
   tag: latest
   pullPolicy: IfNotPresent
 

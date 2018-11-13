@@ -1,13 +1,13 @@
 # Helm Exporter
 
-[![](https://images.microbadger.com/badges/image/sstarcher/helm_exporter.svg)](http://microbadger.com/images/sstarcher/helm_exporter "Get your own image badge on microbadger.com")
-[![Docker Registry](https://img.shields.io/docker/pulls/sstarcher/helm_exporter.svg)](https://registry.hub.docker.com/u/sstarcher/helm_exporter)&nbsp;
+[![](https://images.microbadger.com/badges/image/sstarcher/helm-exporter.svg)](http://microbadger.com/images/sstarcher/helm-exporter "Get your own image badge on microbadger.com")
+[![Docker Registry](https://img.shields.io/docker/pulls/sstarcher/helm-exporter.svg)](https://registry.hub.docker.com/u/sstarcher/helm-exporter)&nbsp;
 
 Exports helm release, chart, and version staistics in the prometheus format.
 
 # Installation
-* A helm chart is available in this [repository](./helm/helm_exporter).
-* `helm install -f helm/helm_exporter` will install and metrics should scrape automatically if prometheus is running
+* A helm chart is available in this [repository](./helm/helm-exporter).
+* `helm install -f helm/helm-exporter` will install and metrics should scrape automatically if prometheus is running
 
 # Metrics
 * http://host:9100/metrics
@@ -15,9 +15,20 @@ Exports helm release, chart, and version staistics in the prometheus format.
 # Format
 ```
 helm_chart_info{chart="ark",release="ark",version="1.2.1"} 1
-helm_chart_info{chart="cluster-autoscaler",release="cluster-autoscaler",version="0.7.0"} 1
+helm_chart_info{chart="cluster-autoscaler",release="cluster-autoscaler",version="0.7.0"} 4
 helm_chart_info{chart="dex",release="dex",version="0.1.0"} 1
 ```
+
+The metric value is the helm status code.
+* 0 UNKNOWN
+* 1 DEPLOYED
+* 2 DELETED
+* 3 SUPERSEDED
+* 4 FAILED
+* 5 DELETING
+* 6 PENDING_INSTALL
+* 7 PENDING_UPGRADE
+* 8 PENDING_ROLLBACK
 
 # Prior Art
 * https://github.com/Kubedex/exporter
