@@ -7,6 +7,7 @@ Exports helm release, chart, and version staistics in the prometheus format.
 
 # Installation
 * A helm chart is available in this [repository](./helm/helm_exporter).
+* `helm install -f helm/helm_exporter` will install and metrics should scrape automatically if prometheus is running
 
 # Metrics
 * http://host:9100/metrics
