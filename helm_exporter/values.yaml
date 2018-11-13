@@ -1,0 +1,17 @@
+replicaCount: 1
+
+image:
+  repository: sstarcher/helm_exprter
+  tag: latest
+  pullPolicy: IfNotPresent
+
+nameOverride: ""
+fullnameOverride: ""
+
+resources: {}
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
