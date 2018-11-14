@@ -88,6 +88,7 @@ func filterList(rels []*release.Release) []*release.Release {
 func helmStats() {
 	items, err := client.ListReleases(helm.ReleaseListStatuses(statusCodes))
 	if err == nil {
+		stats.Reset()
 		for _, item := range filterList(items.GetReleases()) {
 			chart := item.GetChart().GetMetadata().GetName()
 			status := item.GetInfo().GetStatus().GetCode()
