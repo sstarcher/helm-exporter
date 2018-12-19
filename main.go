@@ -30,9 +30,9 @@ var (
 
 	client = NewClient()
 
-	namespace = flag.String("tiller-namespace", "kube-system", "namespace of Tiller (default \"kube-system\")")
+	tillerNamespace = flag.String("tiller-namespace", "kube-system", "namespace of Tiller (default \"kube-system\")")
 
-	inClusterTiller = fmt.Sprintf("tiller-deploy.%s:44134", *namespace)
+	inClusterTiller = fmt.Sprintf("tiller-deploy.%s:44134", *tillerNamespace)
 	localTiller     = "127.0.0.1:44134"
 	statusCodes     = []release.Status_Code{
 		release.Status_UNKNOWN,
