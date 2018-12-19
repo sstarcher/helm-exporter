@@ -42,6 +42,14 @@
   revision = "3a771d992973f24aa725d07868b467d1ddfceafb"
 
 [[projects]]
+  branch = "master"
+  digest = "1:199baa8edc9c06e82143a9f6c758249e62adb12101a6db244935421d3110a7a6"
+  name = "github.com/facebookgo/flagenv"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "fcd59fca7456889be7f2ad4515b7612fd6acef31"
+
+[[projects]]
   digest = "1:2cd7915ab26ede7d95b8749e6b1f933f1c6d5398030684e6505940a10f31cfda"
   name = "github.com/ghodss/yaml"
   packages = ["."]
@@ -303,10 +311,12 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
+    "github.com/facebookgo/flagenv",
     "github.com/prometheus/client_golang/prometheus",
     "github.com/prometheus/client_golang/prometheus/promauto",
     "github.com/prometheus/client_golang/prometheus/promhttp",
     "k8s.io/helm/pkg/helm",
+    "k8s.io/helm/pkg/proto/hapi/release",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1
