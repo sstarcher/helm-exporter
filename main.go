@@ -3,10 +3,12 @@ package main
 import (
 	"fmt"
 	"time"
-
+	"flag"
 	"net/http"
 
 	"k8s.io/helm/pkg/helm"
+
+	"github.com/facebookgo/flagenv"
 
 	"k8s.io/helm/pkg/proto/hapi/release"
 
@@ -28,7 +30,9 @@ var (
 
 	client = NewClient()
 
-	inClusterTiller = "tiller-deploy.kube-system:44134"
+	tillerNamespace = flag.String("tiller-namespace", "kube-system", "namespace of Tiller (default \"kube-system\")")
+
+	inClusterTiller = fmt.Sprintf("tiller-deploy.%s:44134", *tillerNamespace)
 	localTiller     = "127.0.0.1:44134"
 	statusCodes     = []release.Status_Code{
 		release.Status_UNKNOWN,
@@ -104,6 +108,8 @@ func helmStats() {
 }
 
 func main() {
+	flagenv.Parse()
+	flag.Parse()
 	go func() {
 		for {
 			helmStats()
