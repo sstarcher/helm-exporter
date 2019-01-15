@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 	"flag"
+	"strconv"
 	"net/http"
 
 	"k8s.io/helm/pkg/helm"
@@ -25,6 +26,7 @@ var (
 		"chart",
 		"release",
 		"version",
+		"updated",
 		"namespace",
 	})
 
@@ -98,11 +100,12 @@ func helmStats() {
 			status := item.GetInfo().GetStatus().GetCode()
 			releaseName := item.GetName()
 			version := item.GetChart().GetMetadata().GetVersion()
+			updated := strconv.FormatInt(item.GetInfo().GetLastDeployed().Seconds, 10)
 			namespace := item.GetNamespace()
 			if status == release.Status_FAILED {
 				status = -1
 			}
-			stats.WithLabelValues(chart, releaseName, version, namespace).Set(float64(status))
+			stats.WithLabelValues(chart, releaseName, updated, version, namespace).Set(float64(status))
 		}
 	}
 }
