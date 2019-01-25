@@ -1,11 +1,11 @@
 package main
 
 import (
-	"fmt"
-	"time"
 	"flag"
-	"strconv"
+	"fmt"
 	"net/http"
+	"strconv"
+	"time"
 
 	"k8s.io/helm/pkg/helm"
 
@@ -105,7 +105,7 @@ func helmStats() {
 			if status == release.Status_FAILED {
 				status = -1
 			}
-			stats.WithLabelValues(chart, releaseName, updated, version, namespace).Set(float64(status))
+			stats.WithLabelValues(chart, releaseName, version, updated, namespace).Set(float64(status))
 		}
 	}
 }
