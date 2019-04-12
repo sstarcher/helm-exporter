@@ -6,7 +6,7 @@
 Exports helm release, chart, and version staistics in the prometheus format.
 
 # Installation
-* A helm chart is available in this [repository](./helm/helm-exporter).
+* A helm chart is available in this [repository](https://github.com/helm/charts/tree/master/stable/helm-exporter).
 * `helm install helm/helm-exporter --name=helm-exporter` will install and metrics should scrape automatically if prometheus is running
 * If using Grafana you can use this Dashboard to have a list of what's running https://grafana.com/dashboards/9367
 
