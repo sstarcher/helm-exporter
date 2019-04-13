@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
-	"time"
 
 	"k8s.io/helm/pkg/helm"
 
@@ -26,6 +25,7 @@ var (
 		"chart",
 		"release",
 		"version",
+		"appVersion",
 		"updated",
 		"namespace",
 	})
@@ -46,8 +46,11 @@ var (
 		release.Status_PENDING_UPGRADE,
 		release.Status_PENDING_ROLLBACK,
 	}
+
+	prometheusHandler = promhttp.Handler()
 )
 
+// NewClient is the connection to tiller
 func NewClient() *helm.Client {
 	fmt.Printf("attempting to connect to %s\n", inClusterTiller)
 	client := helm.NewClient(helm.Host(inClusterTiller))
@@ -91,7 +94,7 @@ func filterList(rels []*release.Release) []*release.Release {
 	return uniq
 }
 
-func helmStats() {
+func helmStats(w http.ResponseWriter, r *http.Request) {
 	items, err := client.ListReleases(helm.ReleaseListStatuses(statusCodes))
 	if err == nil {
 		stats.Reset()
@@ -100,26 +103,22 @@ func helmStats() {
 			status := item.GetInfo().GetStatus().GetCode()
 			releaseName := item.GetName()
 			version := item.GetChart().GetMetadata().GetVersion()
+			appVersion := item.GetChart().GetMetadata().GetAppVersion()
 			updated := strconv.FormatInt(item.GetInfo().GetLastDeployed().Seconds, 10)
 			namespace := item.GetNamespace()
 			if status == release.Status_FAILED {
 				status = -1
 			}
-			stats.WithLabelValues(chart, releaseName, version, updated, namespace).Set(float64(status))
+			stats.WithLabelValues(chart, releaseName, version, appVersion, updated, namespace).Set(float64(status))
 		}
 	}
+	prometheusHandler.ServeHTTP(w, r)
 }
 
 func main() {
 	flagenv.Parse()
 	flag.Parse()
-	go func() {
-		for {
-			helmStats()
-			time.Sleep(30 * time.Second)
-		}
-	}()
 
-	http.Handle("/metrics", promhttp.Handler())
-	http.ListenAndServe(":9100", nil)
+	http.HandleFunc("/metrics", helmStats)
+	http.ListenAndServe(":9571", nil)
 }

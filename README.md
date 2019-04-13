@@ -11,14 +11,14 @@ Exports helm release, chart, and version staistics in the prometheus format.
 * If using Grafana you can use this Dashboard to have a list of what's running https://grafana.com/dashboards/9367
 
 # Metrics
-* http://host:9100/metrics
+* http://host:9571/metrics
 
 
 # Format
 ```
-helm_chart_info{chart="ark",release="ark",version="1.2.1",namespace="test"} 1
-helm_chart_info{chart="cluster-autoscaler",release="cluster-autoscaler",version="0.7.0",namespace="other"} 4
-helm_chart_info{chart="dex",release="dex",version="0.1.0",namespace="test"} 1
+helm_chart_info{chart="ark",release="ark",version="1.2.1",appVersion="1.2.3",updated="1553201431",namespace="test"} 1
+helm_chart_info{chart="cluster-autoscaler",release="cluster-autoscaler",version="0.7.0",appVersion="",updated="1553201431",namespace="other"} 4
+helm_chart_info{chart="dex",release="dex",version="0.1.0",appVersion="1.2.3",updated="1553201431",namespace="test"} 1
 ```
 
 The metric value is the helm status code.  These status codes indexes do not map up directly to helm.  This is so I can make the bad cases negative values.
