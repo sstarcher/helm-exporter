@@ -104,7 +104,7 @@ func helmStats(w http.ResponseWriter, r *http.Request) {
 			releaseName := item.GetName()
 			version := item.GetChart().GetMetadata().GetVersion()
 			appVersion := item.GetChart().GetMetadata().GetAppVersion()
-			updated := strconv.FormatInt(item.GetInfo().GetLastDeployed().Seconds, 10)
+			updated := strconv.FormatInt((item.GetInfo().GetLastDeployed().Seconds * 1000), 10)
 			namespace := item.GetNamespace()
 			if status == release.Status_FAILED {
 				status = -1
