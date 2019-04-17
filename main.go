@@ -115,10 +115,15 @@ func helmStats(w http.ResponseWriter, r *http.Request) {
 	prometheusHandler.ServeHTTP(w, r)
 }
 
+func healthz(w http.ResponseWriter, r *http.Request) {
+
+}
+
 func main() {
 	flagenv.Parse()
 	flag.Parse()
 
 	http.HandleFunc("/metrics", helmStats)
+	http.HandleFunc("/healthz", healthz)
 	http.ListenAndServe(":9571", nil)
 }
