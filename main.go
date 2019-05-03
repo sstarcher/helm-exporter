@@ -3,15 +3,14 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 
 	"k8s.io/helm/pkg/helm"
-
-	"github.com/facebookgo/flagenv"
-
 	"k8s.io/helm/pkg/proto/hapi/release"
 
+	"github.com/facebookgo/flagenv"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -30,13 +29,10 @@ var (
 		"namespace",
 	})
 
-	client = NewClient()
-
+	localTiller     = "127.0.0.1:44134"
 	tillerNamespace = flag.String("tiller-namespace", "kube-system", "namespace of Tiller (default \"kube-system\")")
 
-	inClusterTiller = fmt.Sprintf("tiller-deploy.%s:44134", *tillerNamespace)
-	localTiller     = "127.0.0.1:44134"
-	statusCodes     = []release.Status_Code{
+	statusCodes = []release.Status_Code{
 		release.Status_UNKNOWN,
 		release.Status_DEPLOYED,
 		release.Status_DELETED,
@@ -50,27 +46,19 @@ var (
 	prometheusHandler = promhttp.Handler()
 )
 
-// NewClient is the connection to tiller
-func NewClient() *helm.Client {
-	fmt.Printf("attempting to connect to %s\n", inClusterTiller)
-	client := helm.NewClient(helm.Host(inClusterTiller))
+// newHelmClient creates a Helm client to the given Tiller. Tries to
+// ping Tiller and returns an error if this fails.
+func newHelmClient(tillerEndpoint string) (*helm.Client, error) {
+	log.Printf("Attempting to connect to %s", tillerEndpoint)
+
+	client := helm.NewClient(helm.Host(tillerEndpoint))
 	err := client.PingTiller()
-	if err != nil {
-		fmt.Printf("attempting to connect to %s\n", localTiller)
-		client = helm.NewClient(helm.Host(localTiller))
-		err := client.PingTiller()
-		if err != nil {
-			panic(fmt.Sprintf("unable to connect to %s and %s\n", inClusterTiller, localTiller))
-		}
-		fmt.Printf("connected to %s\n", localTiller)
-		return client
-	}
-	fmt.Printf("connected to %s\n", inClusterTiller)
-	return client
+
+	return client, err
 }
 
-// Taken from https://github.com/helm/helm/blob/master/cmd/helm/list.go#L197
 // filterList returns a list scrubbed of old releases.
+// Taken from https://github.com/helm/helm/blob/master/cmd/helm/list.go#L197
 func filterList(rels []*release.Release) []*release.Release {
 	idx := map[string]int32{}
 
@@ -94,25 +82,30 @@ func filterList(rels []*release.Release) []*release.Release {
 	return uniq
 }
 
-func helmStats(w http.ResponseWriter, r *http.Request) {
-	items, err := client.ListReleases(helm.ReleaseListStatuses(statusCodes))
-	if err == nil {
-		stats.Reset()
-		for _, item := range filterList(items.GetReleases()) {
-			chart := item.GetChart().GetMetadata().GetName()
-			status := item.GetInfo().GetStatus().GetCode()
-			releaseName := item.GetName()
-			version := item.GetChart().GetMetadata().GetVersion()
-			appVersion := item.GetChart().GetMetadata().GetAppVersion()
-			updated := strconv.FormatInt((item.GetInfo().GetLastDeployed().Seconds * 1000), 10)
-			namespace := item.GetNamespace()
-			if status == release.Status_FAILED {
-				status = -1
+func newHelmStatsHandler(client *helm.Client) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		items, err := client.ListReleases(helm.ReleaseListStatuses(statusCodes))
+		if err == nil {
+			stats.Reset()
+			for _, item := range filterList(items.GetReleases()) {
+				metadata := item.GetChart().GetMetadata()
+
+				chart := metadata.GetName()
+				status := item.GetInfo().GetStatus().GetCode()
+				releaseName := item.GetName()
+				version := metadata.GetVersion()
+				appVersion := metadata.GetAppVersion()
+				updated := strconv.FormatInt((item.GetInfo().GetLastDeployed().Seconds * 1000), 10)
+				namespace := item.GetNamespace()
+				if status == release.Status_FAILED {
+					status = -1
+				}
+
+				stats.WithLabelValues(chart, releaseName, version, appVersion, updated, namespace).Set(float64(status))
 			}
-			stats.WithLabelValues(chart, releaseName, version, appVersion, updated, namespace).Set(float64(status))
 		}
+		prometheusHandler.ServeHTTP(w, r)
 	}
-	prometheusHandler.ServeHTTP(w, r)
 }
 
 func healthz(w http.ResponseWriter, r *http.Request) {
@@ -123,7 +116,18 @@ func main() {
 	flagenv.Parse()
 	flag.Parse()
 
-	http.HandleFunc("/metrics", helmStats)
+	client, err := newHelmClient(fmt.Sprintf("tiller-deploy.%s:44134", *tillerNamespace))
+	if err != nil {
+		log.Printf("Failed to connect: %v", err)
+
+		client, err = newHelmClient(localTiller)
+		if err != nil {
+			log.Printf("Failed to connect: %v", err)
+			log.Fatalln("Giving up.")
+		}
+	}
+
+	http.HandleFunc("/metrics", newHelmStatsHandler(client))
 	http.HandleFunc("/healthz", healthz)
 	http.ListenAndServe(":9571", nil)
 }
