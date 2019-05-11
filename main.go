@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"k8s.io/helm/pkg/helm"
 	"k8s.io/helm/pkg/proto/hapi/release"
@@ -30,7 +31,7 @@ var (
 	})
 
 	localTiller     = "127.0.0.1:44134"
-	tillerNamespace = flag.String("tiller-namespace", "kube-system", "namespace of Tiller (default \"kube-system\")")
+	tillerNamespace = flag.String("tiller-namespaces", "kube-system", "namespaces of Tillers , separated list kube-system,dev")
 
 	statusCodes = []release.Status_Code{
 		release.Status_UNKNOWN,
@@ -53,7 +54,6 @@ func newHelmClient(tillerEndpoint string) (*helm.Client, error) {
 
 	client := helm.NewClient(helm.Host(tillerEndpoint))
 	err := client.PingTiller()
-
 	return client, err
 }
 
@@ -82,26 +82,25 @@ func filterList(rels []*release.Release) []*release.Release {
 	return uniq
 }
 
-func newHelmStatsHandler(client *helm.Client) http.HandlerFunc {
+func newHelmStatsHandler(clients []*helm.Client) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		items, err := client.ListReleases(helm.ReleaseListStatuses(statusCodes))
-		if err == nil {
-			stats.Reset()
-			for _, item := range filterList(items.GetReleases()) {
-				metadata := item.GetChart().GetMetadata()
-
-				chart := metadata.GetName()
-				status := item.GetInfo().GetStatus().GetCode()
-				releaseName := item.GetName()
-				version := metadata.GetVersion()
-				appVersion := metadata.GetAppVersion()
-				updated := strconv.FormatInt((item.GetInfo().GetLastDeployed().Seconds * 1000), 10)
-				namespace := item.GetNamespace()
-				if status == release.Status_FAILED {
-					status = -1
+		stats.Reset()
+		for _, client := range clients {
+			items, err := client.ListReleases(helm.ReleaseListStatuses(statusCodes))
+			if err == nil {
+				for _, item := range filterList(items.GetReleases()) {
+					chart := item.GetChart().GetMetadata().GetName()
+					status := item.GetInfo().GetStatus().GetCode()
+					releaseName := item.GetName()
+					version := item.GetChart().GetMetadata().GetVersion()
+					appVersion := item.GetChart().GetMetadata().GetAppVersion()
+					updated := strconv.FormatInt((item.GetInfo().GetLastDeployed().Seconds * 1000), 10)
+					namespace := item.GetNamespace()
+					if status == release.Status_FAILED {
+						status = -1
+					}
+					stats.WithLabelValues(chart, releaseName, version, appVersion, updated, namespace).Set(float64(status))
 				}
-
-				stats.WithLabelValues(chart, releaseName, version, appVersion, updated, namespace).Set(float64(status))
 			}
 		}
 		prometheusHandler.ServeHTTP(w, r)
@@ -116,18 +115,24 @@ func main() {
 	flagenv.Parse()
 	flag.Parse()
 
-	client, err := newHelmClient(fmt.Sprintf("tiller-deploy.%s:44134", *tillerNamespace))
-	if err != nil {
-		log.Printf("Failed to connect: %v", err)
+	var clients []*helm.Client
+	tNamespaces := strings.Split(*tillerNamespace, ",")
 
-		client, err = newHelmClient(localTiller)
+	for _, np := range tNamespaces {
+		client, err := newHelmClient(fmt.Sprintf("tiller-deploy.%s:44134", np))
 		if err != nil {
 			log.Printf("Failed to connect: %v", err)
-			log.Fatalln("Giving up.")
+
+			client, err = newHelmClient(localTiller)
+			if err != nil {
+				log.Printf("Failed to connect: %v", err)
+				log.Fatalln("Giving up.")
+			}
 		}
+		clients = append(clients, client)
 	}
 
-	http.HandleFunc("/metrics", newHelmStatsHandler(client))
+	http.HandleFunc("/metrics", newHelmStatsHandler(clients))
 	http.HandleFunc("/healthz", healthz)
 	http.ListenAndServe(":9571", nil)
 }
