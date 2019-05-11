@@ -82,10 +82,10 @@ func filterList(rels []*release.Release) []*release.Release {
 	return uniq
 }
 
-func newHelmStatsHandler(allClients []*helm.Client) http.HandlerFunc {
+func newHelmStatsHandler(clients []*helm.Client) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		stats.Reset()
-		for _, client := range allClients {
+		for _, client := range clients {
 			items, err := client.ListReleases(helm.ReleaseListStatuses(statusCodes))
 			if err == nil {
 				for _, item := range filterList(items.GetReleases()) {
