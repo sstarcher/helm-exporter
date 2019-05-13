@@ -34,8 +34,8 @@ var (
 	localTiller     = "127.0.0.1:44134"
 	tillerNamespace = flag.String("tiller-namespaces", "kube-system", "namespaces of Tillers , separated list kube-system,dev")
 	tillerTLSEnable = flag.Bool("tiller-tls-enable", false, "enable TLS communication with tiller (default false)")
-	tillerTLSKey    = flag.String("tiller-tls-key-path", "/etc/helm-exporter/tls.key", "path to private key file used to communicate with tiller")
-	tillerTLSCert   = flag.String("tiller-tls-cert-path", "/etc/helm-exporter/tls.crt", "path to certificate key file used to communicate with tiller")
+	tillerTLSKey    = flag.String("tiller-tls-key", "/etc/helm-exporter/tls.key", "path to private key file used to communicate with tiller")
+	tillerTLSCert   = flag.String("tiller-tls-cert", "/etc/helm-exporter/tls.crt", "path to certificate key file used to communicate with tiller")
 
 	statusCodes = []release.Status_Code{
 		release.Status_UNKNOWN,
