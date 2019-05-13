@@ -65,7 +65,7 @@ func newHelmClient(tillerEndpoint string) (*helm.Client, error) {
 		}
 		tlscfg, err := tlsutil.ClientConfig(tlsopts)
 		if err != nil {
-			panic(fmt.Sprintf("unable to create TLS config: %s", err))
+			return nil, err
 		}
 		options = append(options, helm.WithTLS(tlscfg))
 	}
