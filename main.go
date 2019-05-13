@@ -36,6 +36,7 @@ var (
 	tillerTLSEnable = flag.Bool("tiller-tls-enable", false, "enable TLS communication with tiller (default false)")
 	tillerTLSKey    = flag.String("tiller-tls-key", "/etc/helm-exporter/tls.key", "path to private key file used to communicate with tiller")
 	tillerTLSCert   = flag.String("tiller-tls-cert", "/etc/helm-exporter/tls.crt", "path to certificate key file used to communicate with tiller")
+	tillerTLSVerify = flag.Bool("tiller-tls-verify", false, "enable verification of the remote tiller certificate (default false)")
 
 	statusCodes = []release.Status_Code{
 		release.Status_UNKNOWN,
@@ -61,7 +62,7 @@ func newHelmClient(tillerEndpoint string) (*helm.Client, error) {
 		tlsopts := tlsutil.Options{
 			KeyFile:            *tillerTLSKey,
 			CertFile:           *tillerTLSCert,
-			InsecureSkipVerify: true,
+			InsecureSkipVerify: !(*tillerTLSVerify),
 		}
 		tlscfg, err := tlsutil.ClientConfig(tlsopts)
 		if err != nil {
