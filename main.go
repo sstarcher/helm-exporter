@@ -10,6 +10,7 @@ import (
 
 	"k8s.io/helm/pkg/helm"
 	"k8s.io/helm/pkg/proto/hapi/release"
+	"k8s.io/helm/pkg/tlsutil"
 
 	"github.com/facebookgo/flagenv"
 	"github.com/prometheus/client_golang/prometheus"
@@ -32,6 +33,10 @@ var (
 
 	localTiller     = "127.0.0.1:44134"
 	tillerNamespace = flag.String("tiller-namespaces", "kube-system", "namespaces of Tillers , separated list kube-system,dev")
+	tillerTLSEnable = flag.Bool("tiller-tls-enable", false, "enable TLS communication with tiller (default false)")
+	tillerTLSKey    = flag.String("tiller-tls-key", "/etc/helm-exporter/tls.key", "path to private key file used to communicate with tiller")
+	tillerTLSCert   = flag.String("tiller-tls-cert", "/etc/helm-exporter/tls.crt", "path to certificate key file used to communicate with tiller")
+	tillerTLSVerify = flag.Bool("tiller-tls-verify", false, "enable verification of the remote tiller certificate (default false)")
 
 	statusCodes = []release.Status_Code{
 		release.Status_UNKNOWN,
@@ -52,7 +57,21 @@ var (
 func newHelmClient(tillerEndpoint string) (*helm.Client, error) {
 	log.Printf("Attempting to connect to %s", tillerEndpoint)
 
-	client := helm.NewClient(helm.Host(tillerEndpoint))
+	options := []helm.Option{helm.Host(tillerEndpoint)}
+	if *tillerTLSEnable {
+		tlsopts := tlsutil.Options{
+			KeyFile:            *tillerTLSKey,
+			CertFile:           *tillerTLSCert,
+			InsecureSkipVerify: !(*tillerTLSVerify),
+		}
+		tlscfg, err := tlsutil.ClientConfig(tlsopts)
+		if err != nil {
+			return nil, err
+		}
+		options = append(options, helm.WithTLS(tlscfg))
+	}
+
+	client := helm.NewClient(options...)
 	err := client.PingTiller()
 	return client, err
 }

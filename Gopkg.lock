@@ -285,7 +285,7 @@
   revision = "2a7c9300402896b3c073f2f47df85527c94f83a0"
 
 [[projects]]
-  digest = "1:afde29e1a327b6aa723131a5cb199a14462922a1f03e3f3d37de67f27839deed"
+  digest = "1:ad942673f5b07b6d444e6b838f53bdb3163204596f68c3f340c784ccf06c10f7"
   name = "k8s.io/helm"
   packages = [
     "pkg/chartutil",
@@ -301,6 +301,8 @@
     "pkg/renderutil",
     "pkg/storage/errors",
     "pkg/sympath",
+    "pkg/tlsutil",
+    "pkg/urlutil",
     "pkg/version",
   ]
   pruneopts = "UT"
@@ -317,6 +319,7 @@
     "github.com/prometheus/client_golang/prometheus/promhttp",
     "k8s.io/helm/pkg/helm",
     "k8s.io/helm/pkg/proto/hapi/release",
+    "k8s.io/helm/pkg/tlsutil",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1
