@@ -7,6 +7,7 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /go/bin/helm-exporter /go/
 
 FROM alpine:3.9
 RUN apk --update add ca-certificates
+RUN addgroup -S helm-exporter && adduser -S -G helm-exporter helm-exporter
 USER helm-exporter
 COPY --from=builder /go/bin/helm-exporter /usr/local/bin/helm-exporter
 
