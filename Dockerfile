@@ -5,7 +5,7 @@ COPY . /go/src/github.com/sstarcher/helm-exporter
 
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /go/bin/helm-exporter /go/src/github.com/sstarcher/helm-exporter/main.go
 
-FROM alpine:3.9
+FROM alpine:3.10
 RUN apk --update add ca-certificates
 RUN addgroup -S helm-exporter && adduser -S -G helm-exporter helm-exporter
 USER helm-exporter
