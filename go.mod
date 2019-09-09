@@ -1,4 +1,4 @@
-module github.com/nbenaglia/helm-exporter
+module github.com/sstarcher/helm-exporter
 
 go 1.12
 
