@@ -3,7 +3,7 @@
 [![](https://images.microbadger.com/badges/image/sstarcher/helm-exporter.svg)](http://microbadger.com/images/sstarcher/helm-exporter "Get your own image badge on microbadger.com")
 [![Docker Registry](https://img.shields.io/docker/pulls/sstarcher/helm-exporter.svg)](https://registry.hub.docker.com/u/sstarcher/helm-exporter)&nbsp;
 
-Exports helm release, chart, and version staistics in the prometheus format.
+Exports helm release, chart, and version statistics in the prometheus format.
 
 # Installation
 * A helm chart is available in this [repository](https://github.com/helm/charts/tree/master/stable/helm-exporter).
@@ -12,7 +12,6 @@ Exports helm release, chart, and version staistics in the prometheus format.
 
 # Metrics
 * http://host:9571/metrics
-
 
 # Format
 ```
@@ -34,3 +33,7 @@ The metric value is the helm status code.  These status codes indexes do not map
 
 # Prior Art
 * https://github.com/Kubedex/exporter
+
+# Todo
+* /healthz endpoint method
+
