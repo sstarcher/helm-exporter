@@ -36,7 +36,7 @@ var (
 		"namespace",
 	})
 
-	tillers         = flag.String("tillers", "tiller-deploy.kube-system:44134", "tiller address HOST:PORT of Tillers, separated list tiller-deploy.kube-system44134,tiller-deploy.dev44134")
+	tillers         = flag.String("tillers", "tiller-deploy.kube-system:44134", "tiller address HOST:PORT of Tillers, separated list tiller-deploy.kube-system:44134,tiller-deploy.dev:44134")
 	tillerTLSEnable = flag.Bool("tiller-tls-enable", false, "enable TLS communication with tiller (default false)")
 	tillerTLSKey    = flag.String("tiller-tls-key", "/etc/helm-exporter/tls.key", "path to private key file used to communicate with tiller")
 	tillerTLSCert   = flag.String("tiller-tls-cert", "/etc/helm-exporter/tls.crt", "path to certificate key file used to communicate with tiller")
