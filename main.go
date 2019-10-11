@@ -2,11 +2,13 @@ package main
 
 import (
 	"flag"
-	"fmt"
-	"log"
 	"net/http"
 	"strconv"
 	"strings"
+	"sync"
+	"time"
+
+	log "github.com/sirupsen/logrus"
 
 	"k8s.io/helm/pkg/helm"
 	"k8s.io/helm/pkg/proto/hapi/release"
@@ -19,6 +21,9 @@ import (
 )
 
 var (
+	clients []*helm.Client
+	mutex   sync.RWMutex
+
 	stats = promauto.NewGaugeVec(prometheus.GaugeOpts{
 		Name: "helm_chart_info",
 		Help: "Information on helm releases",
@@ -31,8 +36,7 @@ var (
 		"namespace",
 	})
 
-	localTiller     = "127.0.0.1:44134"
-	tillerNamespace = flag.String("tiller-namespaces", "kube-system", "namespaces of Tillers , separated list kube-system,dev")
+	tillers         = flag.String("tillers", "tiller-deploy.kube-system:44134", "tiller address HOST:PORT of Tillers, separated list tiller-deploy.kube-system:44134,tiller-deploy.dev:44134")
 	tillerTLSEnable = flag.Bool("tiller-tls-enable", false, "enable TLS communication with tiller (default false)")
 	tillerTLSKey    = flag.String("tiller-tls-key", "/etc/helm-exporter/tls.key", "path to private key file used to communicate with tiller")
 	tillerTLSCert   = flag.String("tiller-tls-cert", "/etc/helm-exporter/tls.crt", "path to certificate key file used to communicate with tiller")
@@ -55,8 +59,6 @@ var (
 // newHelmClient creates a Helm client to the given Tiller. Tries to
 // ping Tiller and returns an error if this fails.
 func newHelmClient(tillerEndpoint string) (*helm.Client, error) {
-	log.Printf("Attempting to connect to %s", tillerEndpoint)
-
 	options := []helm.Option{helm.Host(tillerEndpoint)}
 	if *tillerTLSEnable {
 		tlsopts := tlsutil.Options{
@@ -101,7 +103,7 @@ func filterList(rels []*release.Release) []*release.Release {
 	return uniq
 }
 
-func newHelmStatsHandler(clients []*helm.Client) http.HandlerFunc {
+func newHelmStatsHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		stats.Reset()
 		for _, client := range clients {
@@ -130,28 +132,31 @@ func healthz(w http.ResponseWriter, r *http.Request) {
 
 }
 
+func connect(tiller string) {
+	for {
+		client, err := newHelmClient(tiller)
+		if err != nil {
+			log.Warnf("failed to connect to %s with %v", tiller, err)
+		} else {
+			mutex.Lock()
+			clients = append(clients, client)
+			log.Infof("connected to %s", tiller)
+			mutex.Unlock()
+			break
+		}
+		time.Sleep(10 * time.Second)
+	}
+}
+
 func main() {
 	flagenv.Parse()
 	flag.Parse()
 
-	var clients []*helm.Client
-	tNamespaces := strings.Split(*tillerNamespace, ",")
-
-	for _, np := range tNamespaces {
-		client, err := newHelmClient(fmt.Sprintf("tiller-deploy.%s:44134", np))
-		if err != nil {
-			log.Printf("Failed to connect: %v", err)
-
-			client, err = newHelmClient(localTiller)
-			if err != nil {
-				log.Printf("Failed to connect: %v", err)
-				log.Fatalln("Giving up.")
-			}
-		}
-		clients = append(clients, client)
+	for _, tiller := range strings.Split(*tillers, ",") {
+		go connect(tiller)
 	}
 
-	http.HandleFunc("/metrics", newHelmStatsHandler(clients))
+	http.HandleFunc("/metrics", newHelmStatsHandler())
 	http.HandleFunc("/healthz", healthz)
 	http.ListenAndServe(":9571", nil)
 }
