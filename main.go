@@ -5,14 +5,23 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
-	"sync"
-	"time"
+
+	cmap "github.com/orcaman/concurrent-map"
 
 	log "github.com/sirupsen/logrus"
 
-	"k8s.io/helm/pkg/helm"
-	"k8s.io/helm/pkg/proto/hapi/release"
-	"k8s.io/helm/pkg/tlsutil"
+	"os"
+
+	// Import to initialize client auth plugins.
+	_ "k8s.io/client-go/plugin/pkg/client/auth"
+
+	"helm.sh/helm/v3/pkg/action"
+	"helm.sh/helm/v3/pkg/cli"
+
+	"k8s.io/client-go/informers"
+	"k8s.io/client-go/tools/cache"
+
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/facebookgo/flagenv"
 	"github.com/prometheus/client_golang/prometheus"
@@ -21,8 +30,8 @@ import (
 )
 
 var (
-	clients []*helm.Client
-	mutex   sync.RWMutex
+	settings = cli.New()
+	clients  = cmap.New()
 
 	stats = promauto.NewGaugeVec(prometheus.GaugeOpts{
 		Name: "helm_chart_info",
@@ -36,94 +45,46 @@ var (
 		"namespace",
 	})
 
-	tillers         = flag.String("tillers", "tiller-deploy.kube-system:44134", "tiller address HOST:PORT of Tillers, separated list tiller-deploy.kube-system:44134,tiller-deploy.dev:44134")
-	tillerTLSEnable = flag.Bool("tiller-tls-enable", false, "enable TLS communication with tiller (default false)")
-	tillerTLSKey    = flag.String("tiller-tls-key", "/etc/helm-exporter/tls.key", "path to private key file used to communicate with tiller")
-	tillerTLSCert   = flag.String("tiller-tls-cert", "/etc/helm-exporter/tls.crt", "path to certificate key file used to communicate with tiller")
-	tillerTLSVerify = flag.Bool("tiller-tls-verify", false, "enable verification of the remote tiller certificate (default false)")
+	namespaces = flag.String("namespaces", "", "namespaces to monitor.  Defaults to all")
 
-	statusCodes = []release.Status_Code{
-		release.Status_UNKNOWN,
-		release.Status_DEPLOYED,
-		release.Status_DELETED,
-		release.Status_DELETING,
-		release.Status_FAILED,
-		release.Status_PENDING_INSTALL,
-		release.Status_PENDING_UPGRADE,
-		release.Status_PENDING_ROLLBACK,
+	statusCodeMap = map[string]float64{
+		"unknown":          0,
+		"deployed":         1,
+		"uninstalled":      2,
+		"superseded":       3,
+		"failed":           -1,
+		"uninstalling":     5,
+		"pending-install":  6,
+		"pending-upgrade":  7,
+		"pending-rollback": 8,
 	}
 
 	prometheusHandler = promhttp.Handler()
 )
 
-// newHelmClient creates a Helm client to the given Tiller. Tries to
-// ping Tiller and returns an error if this fails.
-func newHelmClient(tillerEndpoint string) (*helm.Client, error) {
-	options := []helm.Option{helm.Host(tillerEndpoint)}
-	if *tillerTLSEnable {
-		tlsopts := tlsutil.Options{
-			KeyFile:            *tillerTLSKey,
-			CertFile:           *tillerTLSCert,
-			InsecureSkipVerify: !(*tillerTLSVerify),
-		}
-		tlscfg, err := tlsutil.ClientConfig(tlsopts)
-		if err != nil {
-			return nil, err
-		}
-		options = append(options, helm.WithTLS(tlscfg))
-	}
-
-	client := helm.NewClient(options...)
-	err := client.PingTiller()
-	return client, err
-}
-
-// filterList returns a list scrubbed of old releases.
-// Taken from https://github.com/helm/helm/blob/master/cmd/helm/list.go#L197
-func filterList(rels []*release.Release) []*release.Release {
-	idx := map[string]int32{}
-
-	for _, r := range rels {
-		name, version := r.GetName(), r.GetVersion()
-		if max, ok := idx[name]; ok {
-			// check if we have a greater version already
-			if max > version {
-				continue
+func runStats() {
+	stats.Reset()
+	for _, client := range clients.Items() {
+		list := action.NewList(client.(*action.Configuration))
+		items, err := list.Run()
+		if err == nil {
+			for _, item := range items {
+				chart := item.Chart.Name()
+				releaseName := item.Name
+				version := item.Chart.Metadata.Version
+				appVersion := item.Chart.AppVersion()
+				updated := strconv.FormatInt((item.Info.LastDeployed.Unix() * 1000), 10)
+				namespace := item.Namespace
+				status := statusCodeMap[item.Info.Status.String()]
+				stats.WithLabelValues(chart, releaseName, version, appVersion, updated, namespace).Set(status)
 			}
 		}
-		idx[name] = version
 	}
-
-	uniq := make([]*release.Release, 0, len(idx))
-	for _, r := range rels {
-		if idx[r.GetName()] == r.GetVersion() {
-			uniq = append(uniq, r)
-		}
-	}
-	return uniq
 }
 
 func newHelmStatsHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		stats.Reset()
-		for _, client := range clients {
-			items, err := client.ListReleases(helm.ReleaseListStatuses(statusCodes))
-			if err == nil {
-				for _, item := range filterList(items.GetReleases()) {
-					chart := item.GetChart().GetMetadata().GetName()
-					status := item.GetInfo().GetStatus().GetCode()
-					releaseName := item.GetName()
-					version := item.GetChart().GetMetadata().GetVersion()
-					appVersion := item.GetChart().GetMetadata().GetAppVersion()
-					updated := strconv.FormatInt((item.GetInfo().GetLastDeployed().Seconds * 1000), 10)
-					namespace := item.GetNamespace()
-					if status == release.Status_FAILED {
-						status = -1
-					}
-					stats.WithLabelValues(chart, releaseName, version, appVersion, updated, namespace).Set(float64(status))
-				}
-			}
-		}
+		runStats()
 		prometheusHandler.ServeHTTP(w, r)
 	}
 }
@@ -132,28 +93,61 @@ func healthz(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func connect(tiller string) {
-	for {
-		client, err := newHelmClient(tiller)
-		if err != nil {
-			log.Warnf("failed to connect to %s with %v", tiller, err)
-		} else {
-			mutex.Lock()
-			clients = append(clients, client)
-			log.Infof("connected to %s", tiller)
-			mutex.Unlock()
-			break
-		}
-		time.Sleep(10 * time.Second)
+func connect(namespace string) {
+	actionConfig := new(action.Configuration)
+	err := actionConfig.Init(settings.RESTClientGetter(), settings.Namespace(), os.Getenv("HELM_DRIVER"), log.Infof)
+	if err != nil {
+		log.Warnf("failed to connect to %s with %v", namespace, err)
+	} else {
+		log.Infof("Watching namespace %s", namespace)
+		clients.Set(namespace, actionConfig)
 	}
+}
+
+func informer() {
+	actionConfig := new(action.Configuration)
+	err := actionConfig.Init(settings.RESTClientGetter(), settings.Namespace(), os.Getenv("HELM_DRIVER"), log.Infof)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	clientset, err := actionConfig.KubernetesClientSet()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	factory := informers.NewSharedInformerFactory(clientset, 0)
+	informer := factory.Core().V1().Namespaces().Informer()
+	stopper := make(chan struct{})
+	defer close(stopper)
+
+	informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
+		AddFunc: func(obj interface{}) {
+			// "k8s.io/apimachinery/pkg/apis/meta/v1" provides an Object
+			// interface that allows us to get metadata easily
+			mObj := obj.(v1.Object)
+			connect(mObj.GetName())
+		},
+		DeleteFunc: func(obj interface{}) {
+			mObj := obj.(v1.Object)
+			log.Infof("Removing namespace %s", mObj.GetName())
+			clients.Remove(mObj.GetName())
+		},
+	})
+
+	informer.Run(stopper)
 }
 
 func main() {
 	flagenv.Parse()
 	flag.Parse()
 
-	for _, tiller := range strings.Split(*tillers, ",") {
-		go connect(tiller)
+	if namespaces == nil || *namespaces == "" {
+		go informer()
+	} else {
+		for _, namespace := range strings.Split(*namespaces, ",") {
+			connect(namespace)
+		}
 	}
 
 	http.HandleFunc("/metrics", newHelmStatsHandler())
