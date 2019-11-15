@@ -1,29 +1,20 @@
 module github.com/sstarcher/helm-exporter
 
-go 1.12
+go 1.13
+
+// Pulled from https://github.com/helm/helm/blob/master/go.mod
+// To ensure correct dependency resolution
+replace github.com/docker/docker => github.com/moby/moby v0.7.3-0.20190826074503-38ab9da00309
 
 require (
-	github.com/BurntSushi/toml v0.3.1 // indirect
-	github.com/Masterminds/semver v1.4.2 // indirect
-	github.com/Masterminds/sprig v2.16.0+incompatible // indirect
-	github.com/aokoli/goutils v1.0.1 // indirect
-	github.com/beorn7/perks v0.0.0-20180321164747-3a771d992973 // indirect
+	github.com/facebookgo/ensure v0.0.0-20160127193407-b4ab57deab51 // indirect
 	github.com/facebookgo/flagenv v0.0.0-20160425205200-fcd59fca7456
-	github.com/ghodss/yaml v1.0.0 // indirect
-	github.com/gobwas/glob v0.2.3 // indirect
-	github.com/google/uuid v1.0.0 // indirect
-	github.com/huandu/xstrings v1.2.0 // indirect
-	github.com/imdario/mergo v0.3.6 // indirect
-	github.com/matttproud/golang_protobuf_extensions v1.0.1 // indirect
-	github.com/prometheus/client_golang v0.9.1
-	github.com/prometheus/client_model v0.0.0-20180712105110-5c3871d89910 // indirect
-	github.com/prometheus/common v0.0.0-20181112223108-a04bd04888af // indirect
-	github.com/prometheus/procfs v0.0.0-20181005140218-185b4288413d // indirect
+	github.com/facebookgo/stack v0.0.0-20160209184415-751773369052 // indirect
+	github.com/facebookgo/subset v0.0.0-20150612182917-8dac2c3c4870 // indirect
+	github.com/orcaman/concurrent-map v0.0.0-20190826125027-8c72a8bb44f6
+	github.com/prometheus/client_golang v1.2.1
 	github.com/sirupsen/logrus v1.4.2
-	golang.org/x/crypto v0.0.0-20181112202954-3d3f9f413869 // indirect
-	golang.org/x/net v0.0.0-20181108082009-03003ca0c849 // indirect
-	google.golang.org/genproto v0.0.0-20181109154231-b5d43981345b // indirect
-	gopkg.in/yaml.v2 v2.2.1 // indirect
-	k8s.io/apimachinery v0.0.0-20181110190943-2a7c93004028 // indirect
-	k8s.io/helm v2.11.0+incompatible
+	helm.sh/helm/v3 v3.0.0
+	k8s.io/apimachinery v0.0.0-20191028221656-72ed19daf4bb
+	k8s.io/client-go v0.0.0-20191114101535-6c5935290e33
 )
