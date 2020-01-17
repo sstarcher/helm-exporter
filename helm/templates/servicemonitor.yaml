@@ -1,0 +1,31 @@
+{{ if .Values.serviceMonitor.create }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ include "helm-exporter.fullname" . }}
+  labels:
+    {{ include "helm-exporter.labels" . | nindent 4 }}
+    {{- range $key, $value := .Values.serviceMonitor.additionalLabels }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+  {{- with .Values.serviceMonitor.namespace }}
+  namespace: {{ . }}
+  {{- end }}
+spec:
+  endpoints:
+  - port: {{ .Values.service.port }}
+    honorLabels: true
+    {{- with .Values.serviceMonitor.interval }}
+    interval: {{ . }}
+    {{- end }}
+    {{- with .Values.serviceMonitor.scrapeTimeout }}
+    scrapeTimeout: {{ . }}
+    {{- end }}
+  namespaceSelector:
+    matchNames:
+    - {{ .Release.Namespace }}
+  selector:
+    matchLabels:
+      {{- include "helm-exporter.selectorLabels" . | nindent 4 }}
+
+{{- end }}

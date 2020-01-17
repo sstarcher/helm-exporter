@@ -67,17 +67,20 @@ func runStats() {
 	for _, client := range clients.Items() {
 		list := action.NewList(client.(*action.Configuration))
 		items, err := list.Run()
-		if err == nil {
-			for _, item := range items {
-				chart := item.Chart.Name()
-				releaseName := item.Name
-				version := item.Chart.Metadata.Version
-				appVersion := item.Chart.AppVersion()
-				updated := strconv.FormatInt((item.Info.LastDeployed.Unix() * 1000), 10)
-				namespace := item.Namespace
-				status := statusCodeMap[item.Info.Status.String()]
-				stats.WithLabelValues(chart, releaseName, version, appVersion, updated, namespace).Set(status)
-			}
+		if err != nil {
+			log.Warnf("got error while listing %v", err)
+			continue
+		}
+
+		for _, item := range items {
+			chart := item.Chart.Name()
+			releaseName := item.Name
+			version := item.Chart.Metadata.Version
+			appVersion := item.Chart.AppVersion()
+			updated := strconv.FormatInt((item.Info.LastDeployed.Unix() * 1000), 10)
+			namespace := item.Namespace
+			status := statusCodeMap[item.Info.Status.String()]
+			stats.WithLabelValues(chart, releaseName, version, appVersion, updated, namespace).Set(status)
 		}
 	}
 }
