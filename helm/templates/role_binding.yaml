@@ -1,0 +1,14 @@
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: {{ include "helm-exporter.fullname" . }}
+  labels:
+{{ include "helm-exporter.labels" . | nindent 4 }}
+subjects:
+- kind: ServiceAccount
+  namespace: {{ .Release.Namespace }}
+  name: {{ include "helm-exporter.serviceAccountName" . }}
+roleRef:
+  kind: ClusterRole
+  name: {{ include "helm-exporter.fullname" . }}
+  apiGroup: rbac.authorization.k8s.io
