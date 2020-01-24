@@ -98,7 +98,7 @@ func healthz(w http.ResponseWriter, r *http.Request) {
 
 func connect(namespace string) {
 	actionConfig := new(action.Configuration)
-	err := actionConfig.Init(settings.RESTClientGetter(), settings.Namespace(), os.Getenv("HELM_DRIVER"), log.Infof)
+	err := actionConfig.Init(settings.RESTClientGetter(), namespace, os.Getenv("HELM_DRIVER"), log.Infof)
 	if err != nil {
 		log.Warnf("failed to connect to %s with %v", namespace, err)
 	} else {
