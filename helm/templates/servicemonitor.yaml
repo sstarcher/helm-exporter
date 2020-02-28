@@ -26,6 +26,6 @@ spec:
     - {{ .Release.Namespace }}
   selector:
     matchLabels:
-      {{- include "helm-exporter.selectorLabels" . | nindent 4 }}
+      {{- include "helm-exporter.selectorLabels" . | nindent 6 }}
 
 {{- end }}
