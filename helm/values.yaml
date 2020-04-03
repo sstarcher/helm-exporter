@@ -4,6 +4,7 @@ namespaces: ""
 serviceMonitor:
   # Specifies whether a ServiceMonitor should be created
   create: false
+  port: "http"
   interval:
   scrapeTimeout:
   namespace:
