@@ -28,3 +28,10 @@ jobs:
         
     - name: Build
       run: go build -v .
+
+    - name: Helm Chart Testing
+      uses: helm/chart-testing-action@master
+
+    - name: Helm3 Publish
+      uses: funkypenguin/helm-gh-pages-action@v1.1.1
+      
