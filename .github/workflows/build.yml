@@ -7,12 +7,9 @@ on:
     branches: [ master ]
 
 jobs:
-
   build:
-    name: Build
     runs-on: ubuntu-latest
     steps:
-
     - name: Set up Go 1.13
       uses: actions/setup-go@v1
       with:
@@ -25,13 +22,14 @@ jobs:
     - name: Get dependencies
       run: |
         go get -v -t -d ./...
-        
+
     - name: Build
       run: go build -v .
 
-    - name: Helm Chart Testing
-      uses: helm/chart-testing-action@master
+    - name: helm-check
+      uses: igabaydulin/helm-check-action@0.1.4
+      env:
+        CHART_LOCATION: ./helm
+        CHART_VALUES: ./helm/ci/values.yaml
 
-    - name: Helm3 Publish
-      uses: funkypenguin/helm-gh-pages-action@v1.1.1
-      
+
