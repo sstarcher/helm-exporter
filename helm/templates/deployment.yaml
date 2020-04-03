@@ -35,7 +35,7 @@ spec:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          {{- if .Values.tillerNamespaces }}
+          {{- if .Values.namespaces }}
           args: ["-namespaces", {{ .Values.namespaces | quote }}]
           {{- end }}
           ports:
