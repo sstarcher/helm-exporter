@@ -19,6 +19,9 @@ imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
 
+rbac:
+  create: true
+
 serviceAccount:
   # Specifies whether a service account should be created
   create: true
@@ -28,6 +31,8 @@ serviceAccount:
 
 podSecurityContext: {}
   # fsGroup: 2000
+
+podAnnotations: {}
 
 securityContext: {}
   # capabilities:
