@@ -24,7 +24,7 @@ jobs:
 
     - uses: instrumenta/kubeval-action@5915e4adba5adccac07cb156b82e54c3fed74921
       with:
-        files: derp
+        files: kubeval
 
     - uses: igabaydulin/helm-check-action@0.1.4
       env:
