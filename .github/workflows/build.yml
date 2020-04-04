@@ -26,6 +26,9 @@ jobs:
     - name: Build
       run: go build -v .
 
+    - name: kubeval
+      uses: instrumenta/kubeval-action
+
     - name: helm-check
       uses: igabaydulin/helm-check-action@0.1.4
       env:
