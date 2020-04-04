@@ -10,31 +10,23 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - name: Set up Go 1.13
-      uses: actions/setup-go@v1
+    - uses: actions/setup-go@v1
       with:
         go-version: 1.13
       id: go
 
-    - name: Check out code into the Go module directory
-      uses: actions/checkout@v2
+    - uses: actions/checkout@v2
 
-    - name: Get dependencies
-      run: |
-        go get -v -t -d ./...
-
-    - name: Build
-      run: go build -v .
+    - run: |
+        go build -v .
 
     - run: helm template helm > kubeval
 
-    - name: kubeval
-      uses: instrumenta/kubeval-action@5915e4adba5adccac07cb156b82e54c3fed74921
+    - uses: instrumenta/kubeval-action@5915e4adba5adccac07cb156b82e54c3fed74921
       with:
         files: derp
 
-    - name: helm-check
-      uses: igabaydulin/helm-check-action@0.1.4
+    - uses: igabaydulin/helm-check-action@0.1.4
       env:
         CHART_LOCATION: ./helm
         CHART_VALUES: ./helm/ci/values.yaml
