@@ -28,6 +28,8 @@ jobs:
 
     - name: Update Chart Version
       run: ./helm-charts/add.sh
+      env:
+        HELM_RELEASE: release-tags
 
     - name: Push changes
       uses: ad-m/github-push-action@master
