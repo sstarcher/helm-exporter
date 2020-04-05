@@ -8,31 +8,24 @@ jobs:
   chart:
     runs-on: ubuntu-latest
     steps:
-    - name: Check out code into the Go module directory
-      uses: actions/checkout@v2
+    - uses: actions/checkout@v2
 
     - run: git fetch --prune --unshallow
 
-    - name: Set up Go 1.13
-      uses: actions/setup-go@v2-beta
+    - uses: actions/setup-go@v2-beta
       with:
         go-version: 1.13
       id: go
 
-    - name: Checkout private tools
-      uses: actions/checkout@v2
+    - uses: actions/checkout@v2
       with:
         repository: sstarcher/helm-charts
         token: ${{ secrets.ACCESS_TOKEN }}
         path: helm-charts
 
-    - name: Update Chart Version
-      run: ./helm-charts/add.sh
-      env:
-        HELM_RELEASE: release-tags
+    - run: ./helm-charts/add.sh
 
-    - name: Push changes
-      uses: ad-m/github-push-action@master
+    - uses: ad-m/github-push-action@master
       with:
         github_token: ${{ secrets.ACCESS_TOKEN }}
         directory: helm-charts
