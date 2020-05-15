@@ -50,6 +50,7 @@ var (
 
 	namespaces = flag.String("namespaces", "", "namespaces to monitor.  Defaults to all")
 	configFile = flag.String("config", "", "Configfile to load for helm overwrite registries.  Default is empty")
+	timestamp  = flag.Bool("timestamp", false, "Set value to timestamp.  Defaults to false")
 
 	statusCodeMap = map[string]float64{
 		"unknown":          0,
@@ -88,12 +89,17 @@ func runStats(config config.Config) {
 			releaseName := item.Name
 			version := item.Chart.Metadata.Version
 			appVersion := item.Chart.AppVersion()
-			updated := strconv.FormatInt((item.Info.LastDeployed.Unix() * 1000), 10)
+			updated := item.Info.LastDeployed.Unix() * 1000
 			namespace := item.Namespace
 			status := statusCodeMap[item.Info.Status.String()]
 			latestVersion := getLatestChartVersionFromHelm(item.Chart.Name(), config.HelmRegistries)
 			//latestVersion := "3.1.8"
-			stats.WithLabelValues(chart, releaseName, version, appVersion, updated, namespace, latestVersion).Set(status)
+
+			if *timestamp == false {
+				stats.WithLabelValues(chart, releaseName, version, appVersion, strconv.FormatInt(updated, 10), namespace, latestVersion).Set(status)
+			} else {
+				stats.WithLabelValues(chart, releaseName, version, appVersion, strconv.FormatInt(updated, 10), namespace, latestVersion).Set(float64(updated))
+			}
 		}
 	}
 }

@@ -1,5 +1,6 @@
 # Specifies which namespaces to query for helm 3 metrics.  Defaults to all
 namespaces: ""
+timestamp: false
 
 serviceMonitor:
   # Specifies whether a ServiceMonitor should be created

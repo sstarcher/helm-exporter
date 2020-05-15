@@ -43,9 +43,16 @@ spec:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          {{- if .Values.namespaces }}
-          args: ["-namespaces", {{ .Values.namespaces | quote }}]
-          {{- end }}
+          args:
+            {{- if .Values.namespaces }}
+            - "-namespaces"
+            - {{ .Values.namespaces | quote }}
+            {{- end }}
+            {{- if .Values.timestamp }}
+            - "-timestamp=true"
+            {{- else }}
+            - "-timestamp=false"
+            {{- end }}
           ports:
             - name: http
               containerPort: 9571

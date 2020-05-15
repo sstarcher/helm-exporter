@@ -72,6 +72,7 @@ The following table lists the configurable parameters of the helm-exporter chart
 | serviceMonitor.namespace | string | `nil` | The namespace where the Prometheus Operator is deployed |
 | serviceMonitor.additionalLabels |object | `{}` | Additional labels to add to the ServiceMonitor	|
 | serviceMonitor.scrapeTimeout | string | `nil` | Scrape Timeout when the metrics endpoint is scraped |
+| timestamp | bool | `false` | Specifies whether to set value to helm release's timestamp. |
 | tolerations | list | `[]` | Tolerations for use with node taints [https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/](https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/)|
 
 
