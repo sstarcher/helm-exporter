@@ -1,0 +1,11 @@
+{{- if .Values.config -}}
+kind: ConfigMap
+apiVersion: v1
+metadata:
+    name: {{ include "helm-exporter.fullname" . }}
+    labels:
+        {{ include "helm-exporter.labels" . | nindent 4 }}
+data:
+    config.yaml: |-
+{{ toYaml .Values.config | indent 6}}
+{{- end }}

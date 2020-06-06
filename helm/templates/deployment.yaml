@@ -22,15 +22,23 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
     spec:
-    {{- with .Values.imagePullSecrets }}
+    {{- if .Values.imagePullSecrets }}
       imagePullSecrets:
-        {{- toYaml . | nindent 8 }}
-    {{- end }}
+      {{- range .Values.imagePullSecrets }}
+      - name: {{ . }}
+      {{- end }}
+      {{- end }}
       serviceAccountName: {{ include "helm-exporter.serviceAccountName" . }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       containers:
         - name: {{ .Chart.Name }}
+          {{- if .Values.config }}
+          args:
+          - --config=/config/config.yaml
+          command:
+          - helm-exporter
+          {{- end }}
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Chart.AppVersion }}"
@@ -52,6 +60,11 @@ spec:
               port: http
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
+          {{- if .Values.config }}
+          volumeMounts:
+            - mountPath: /config
+              name: {{ include "helm-exporter.fullname" . }}
+          {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
@@ -63,4 +76,10 @@ spec:
     {{- with .Values.tolerations }}
       tolerations:
         {{- toYaml . | nindent 8 }}
+    {{- end }}
+    {{- if .Values.config }}
+      volumes:
+      - name: {{ include "helm-exporter.fullname" . }}
+        configMap:
+          name: {{ include "helm-exporter.fullname" . }}
     {{- end }}
