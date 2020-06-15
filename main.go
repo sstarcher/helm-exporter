@@ -2,6 +2,8 @@ package main
 
 import (
 	"flag"
+	"github.com/sstarcher/helm-exporter/config"
+	"github.com/sstarcher/helm-exporter/registries"
 	"net/http"
 	"strconv"
 	"strings"
@@ -43,9 +45,11 @@ var (
 		"appVersion",
 		"updated",
 		"namespace",
+		"latestVersion",
 	})
 
 	namespaces = flag.String("namespaces", "", "namespaces to monitor.  Defaults to all")
+	configFile = flag.String("config", "", "Configfile to load for helm overwrite registries.  Default is empty")
 
 	statusCodeMap = map[string]float64{
 		"unknown":          0,
@@ -62,7 +66,14 @@ var (
 	prometheusHandler = promhttp.Handler()
 )
 
-func runStats() {
+func initFlags() config.AppConfig {
+	cliFlags := new(config.AppConfig)
+	cliFlags.ConfigFile = *configFile
+	return *cliFlags
+}
+
+func runStats(config config.Config) {
+
 	stats.Reset()
 	for _, client := range clients.Items() {
 		list := action.NewList(client.(*action.Configuration))
@@ -80,14 +91,22 @@ func runStats() {
 			updated := strconv.FormatInt((item.Info.LastDeployed.Unix() * 1000), 10)
 			namespace := item.Namespace
 			status := statusCodeMap[item.Info.Status.String()]
-			stats.WithLabelValues(chart, releaseName, version, appVersion, updated, namespace).Set(status)
+			latestVersion := getLatestChartVersionFromHelm(item.Chart.Name(), config.HelmRegistries)
+			//latestVersion := "3.1.8"
+			stats.WithLabelValues(chart, releaseName, version, appVersion, updated, namespace, latestVersion).Set(status)
 		}
 	}
 }
 
-func newHelmStatsHandler() http.HandlerFunc {
+func getLatestChartVersionFromHelm(name string, helmRegistries registries.HelmRegistries) (version string) {
+	version = helmRegistries.GetLatestVersionFromHelm(name)
+	log.Warnf("last chart repo version is  %v", version)
+	return
+}
+
+func newHelmStatsHandler(config config.Config) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		runStats()
+		runStats(config)
 		prometheusHandler.ServeHTTP(w, r)
 	}
 }
@@ -144,6 +163,8 @@ func informer() {
 func main() {
 	flagenv.Parse()
 	flag.Parse()
+	cliFlags := initFlags()
+	config := config.LoadConfiguration(cliFlags.ConfigFile)
 
 	if namespaces == nil || *namespaces == "" {
 		go informer()
@@ -153,7 +174,7 @@ func main() {
 		}
 	}
 
-	http.HandleFunc("/metrics", newHelmStatsHandler())
+	http.HandleFunc("/metrics", newHelmStatsHandler(config))
 	http.HandleFunc("/healthz", healthz)
-	http.ListenAndServe(":9571", nil)
+	log.Fatal(http.ListenAndServe(":9571", nil))
 }
