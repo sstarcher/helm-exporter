@@ -76,3 +76,20 @@ nodeSelector: {}
 tolerations: []
 
 affinity: {}
+
+# Configuration to specifiy from which upstream repo to get the latest helm chart version
+# This is useful for the case of e.g. where the name "mysql" exist for multiple charts
+# Also if the repo is not the default helm repo
+config:
+  helmRegistries:
+    overrideChartNames: {}
+#      mysql: stable/test
+# If the helm charts are not stored on hub.helm.sh then a custom registry can be configured here.
+# Currently only index.yaml registry is supported (helm supports other registries as well)
+  override:
+    - registry:
+        url: "" # https://some.url/index.yaml # Url to the index file
+      charts: [] # Chart names
+#        - splunk
+#        - falco-eks-audit-bridge
+      allowAllReleases: true # This allows all semver versions, like release candidates or custom suffixes. Default is false
