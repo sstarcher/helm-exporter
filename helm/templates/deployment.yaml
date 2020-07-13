@@ -33,19 +33,20 @@ spec:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       containers:
         - name: {{ .Chart.Name }}
-          {{- if .Values.config }}
           args:
+          - --log-level={{ .Values.logLevel }}
+          {{- if .Values.config }}
           - --config=/config/config.yaml
+          {{- end }}
+          {{- if .Values.namespaces }}
+          - --namespaces={{ .Values.namespaces | quote }}
+          {{- end }}
           command:
           - helm-exporter
-          {{- end }}
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          {{- if .Values.namespaces }}
-          args: ["-namespaces", {{ .Values.namespaces | quote }}]
-          {{- end }}
           ports:
             - name: http
               containerPort: 9571

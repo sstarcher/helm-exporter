@@ -2,11 +2,12 @@ package registries
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
-	"github.com/sstarcher/helm-exporter/versioning"
+
 	log "github.com/sirupsen/logrus"
-	"errors"
+	"github.com/sstarcher/helm-exporter/versioning"
 )
 
 var errMultipleCharts = errors.New("multiple charts found")
@@ -43,18 +44,18 @@ func (h HelmRegistries) useHelmHub(chart string) string {
 		chartName, err = findChart(chart)
 		if err != nil {
 			if err == errMultipleCharts {
-				log.WithError(err).WithField("chart", chart).Error("Failed to search chart info, found multiple charts.")
+				log.WithError(err).WithField("chart", chart).Warn("Failed to search chart info, found multiple charts.")
 				return versioning.Multiple
 			} else {
-			log.WithError(err).WithField("chart", chart).Error("Failed to search chart info")
-			return versioning.Failure
+				log.WithError(err).WithField("chart", chart).Warn("Failed to search chart info")
+				return versioning.Failure
 			}
 		}
 	}
 
 	versions, err := getChartVersions(chartName)
 	if err != nil {
-		log.WithError(err).WithField("chart", chart).Error("Failed to fetch chart info")
+		log.WithError(err).WithField("chart", chart).Warn("Failed to fetch chart info")
 		return versioning.Failure
 	}
 

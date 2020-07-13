@@ -2,11 +2,12 @@ package main
 
 import (
 	"flag"
-	"github.com/sstarcher/helm-exporter/config"
-	"github.com/sstarcher/helm-exporter/registries"
 	"net/http"
 	"strconv"
 	"strings"
+
+	"github.com/sstarcher/helm-exporter/config"
+	"github.com/sstarcher/helm-exporter/registries"
 
 	cmap "github.com/orcaman/concurrent-map"
 
@@ -49,6 +50,7 @@ var (
 	})
 
 	namespaces = flag.String("namespaces", "", "namespaces to monitor.  Defaults to all")
+	logLevel   = flag.String("log-level", log.ErrorLevel.String(), "The log level to use")
 	configFile = flag.String("config", "", "Configfile to load for helm overwrite registries.  Default is empty")
 
 	statusCodeMap = map[string]float64{
@@ -165,6 +167,12 @@ func main() {
 	flag.Parse()
 	cliFlags := initFlags()
 	config := config.LoadConfiguration(cliFlags.ConfigFile)
+
+	l, err := log.ParseLevel(*logLevel)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.SetLevel(l)
 
 	if namespaces == nil || *namespaces == "" {
 		go informer()
