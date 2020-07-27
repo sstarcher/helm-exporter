@@ -49,6 +49,7 @@ The following table lists the configurable parameters of the helm-exporter chart
 | image.pullPolicy | string | `"Always"` | Image pull policy for the webhook integration jobs |
 | image.repository | string | `"sstarcher/helm-exporter"` | Repository to use for the webhook integration jobs |
 | imagePullSecrets | list | `[]` | Reference to one or more secrets to be used when pulling images |
+| infoMetric | bool | `true` | Specifies whether to generate the info metric. |
 | ingress.annotations | object | `{}` |  Annotations for the helm-exporter |
 | ingress.enabled | bool | `false` | If true, helm-exporter Ingress will be created |
 | ingress.hosts[0].host | string | `"chart-example.local"` | Ingress hostname |
@@ -72,7 +73,7 @@ The following table lists the configurable parameters of the helm-exporter chart
 | serviceMonitor.namespace | string | `nil` | The namespace where the Prometheus Operator is deployed |
 | serviceMonitor.additionalLabels |object | `{}` | Additional labels to add to the ServiceMonitor	|
 | serviceMonitor.scrapeTimeout | string | `nil` | Scrape Timeout when the metrics endpoint is scraped |
-| timestamp | bool | `false` | Specifies whether to set value to helm release's timestamp. |
+| timestampMetric | bool | `true` | Specifies whether to generate the timestamps metric. |
 | tolerations | list | `[]` | Tolerations for use with node taints [https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/](https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/)|
 
 

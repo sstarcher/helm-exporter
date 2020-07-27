@@ -48,10 +48,11 @@ spec:
             - "-namespaces"
             - {{ .Values.namespaces | quote }}
             {{- end }}
-            {{- if .Values.timestamp }}
-            - "-timestamp=true"
-            {{- else }}
-            - "-timestamp=false"
+            {{- if not .Values.infoMetric }}
+            - "-info-metric=false"
+            {{- end }}
+            {{- if not .Values.timestampMetric }}
+            - "-timestamp-metric=false"
             {{- end }}
           ports:
             - name: http

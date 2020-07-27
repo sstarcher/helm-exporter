@@ -35,7 +35,7 @@ var (
 	settings = cli.New()
 	clients  = cmap.New()
 
-	stats = promauto.NewGaugeVec(prometheus.GaugeOpts{
+	statsInfo = promauto.NewGaugeVec(prometheus.GaugeOpts{
 		Name: "helm_chart_info",
 		Help: "Information on helm releases",
 	}, []string{
@@ -48,9 +48,24 @@ var (
 		"latestVersion",
 	})
 
+	statsTimestamp = promauto.NewGaugeVec(prometheus.GaugeOpts{
+		Name: "helm_chart_timestamp",
+		Help: "Timestamps of helm releases",
+	}, []string{
+		"chart",
+		"release",
+		"version",
+		"appVersion",
+		"updated",
+		"namespace",
+		"latestVersion",
+	})
+
 	namespaces = flag.String("namespaces", "", "namespaces to monitor.  Defaults to all")
 	configFile = flag.String("config", "", "Configfile to load for helm overwrite registries.  Default is empty")
-	timestamp  = flag.Bool("timestamp", false, "Set value to timestamp.  Defaults to false")
+
+	infoMetric      = flag.Bool("info-metric", true, "Generate info metric.  Defaults to true")
+	timestampMetric = flag.Bool("timestamp-metric", true, "Generate timestamps metric.  Defaults to true")
 
 	statusCodeMap = map[string]float64{
 		"unknown":          0,
@@ -74,8 +89,13 @@ func initFlags() config.AppConfig {
 }
 
 func runStats(config config.Config) {
+	if *infoMetric == true {
+		statsInfo.Reset()
+	}
+	if *timestampMetric == true {
+		statsTimestamp.Reset()
+	}
 
-	stats.Reset()
 	for _, client := range clients.Items() {
 		list := action.NewList(client.(*action.Configuration))
 		items, err := list.Run()
@@ -95,10 +115,11 @@ func runStats(config config.Config) {
 			latestVersion := getLatestChartVersionFromHelm(item.Chart.Name(), config.HelmRegistries)
 			//latestVersion := "3.1.8"
 
-			if *timestamp == false {
-				stats.WithLabelValues(chart, releaseName, version, appVersion, strconv.FormatInt(updated, 10), namespace, latestVersion).Set(status)
-			} else {
-				stats.WithLabelValues(chart, releaseName, version, appVersion, strconv.FormatInt(updated, 10), namespace, latestVersion).Set(float64(updated))
+			if *infoMetric == true {
+				statsInfo.WithLabelValues(chart, releaseName, version, appVersion, strconv.FormatInt(updated, 10), namespace, latestVersion).Set(status)
+			}
+			if *timestampMetric == true {
+				statsTimestamp.WithLabelValues(chart, releaseName, version, appVersion, strconv.FormatInt(updated, 10), namespace, latestVersion).Set(float64(updated))
 			}
 		}
 	}
