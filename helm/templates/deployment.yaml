@@ -33,17 +33,15 @@ spec:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       containers:
         - name: {{ .Chart.Name }}
-          {{- if .Values.config }}
-          args:
-          - --config=/config/config.yaml
-          command:
-          - helm-exporter
-          {{- end }}
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           args:
+            {{- if .Values.config }}
+            - "-config"
+            - "/config/config.yaml"
+            {{- end }}
             {{- if .Values.namespaces }}
             - "-namespaces"
             - {{ .Values.namespaces | quote }}
