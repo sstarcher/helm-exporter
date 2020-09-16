@@ -55,6 +55,7 @@ The following table lists the configurable parameters of the helm-exporter chart
 | ingress.hosts[0].host | string | `"chart-example.local"` | Ingress hostname |
 | ingress.hosts[0].paths | list | `[]` | Ingress paths |
 | ingress.tls | list | `[]` | Ingress TLS configuration (YAML) |
+| latestChartVersion | bool | `true` | Specifies whether to fetch the latest chart versions from repositories. |
 | nameOverride | string | `""` | Provide a name in place of helm-exporter |
 | namespaces | string | `""` | Specifies which namespaces to query for helm 3 metrics.  Defaults to all |
 | nodeSelector | object | `{}` | helm-exporter node selector [https://kubernetes.io/docs/user-guide/node-selection/](https://kubernetes.io/docs/user-guide/node-selection/ ) |
