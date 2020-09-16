@@ -2,11 +2,12 @@ package main
 
 import (
 	"flag"
-	"github.com/sstarcher/helm-exporter/config"
-	"github.com/sstarcher/helm-exporter/registries"
 	"net/http"
 	"strconv"
 	"strings"
+
+	"github.com/sstarcher/helm-exporter/config"
+	"github.com/sstarcher/helm-exporter/registries"
 
 	cmap "github.com/orcaman/concurrent-map"
 
@@ -67,6 +68,8 @@ var (
 	infoMetric      = flag.Bool("info-metric", true, "Generate info metric.  Defaults to true")
 	timestampMetric = flag.Bool("timestamp-metric", true, "Generate timestamps metric.  Defaults to true")
 
+	fetchLatest = flag.Bool("latest-chart-version", true, "Attempt to fetch the latest chart version from registries. Defaults to true")
+
 	statusCodeMap = map[string]float64{
 		"unknown":          0,
 		"deployed":         1,
@@ -112,8 +115,11 @@ func runStats(config config.Config) {
 			updated := item.Info.LastDeployed.Unix() * 1000
 			namespace := item.Namespace
 			status := statusCodeMap[item.Info.Status.String()]
-			latestVersion := getLatestChartVersionFromHelm(item.Chart.Name(), config.HelmRegistries)
-			//latestVersion := "3.1.8"
+			latestVersion := ""
+
+			if *fetchLatest {
+				latestVersion = getLatestChartVersionFromHelm(item.Chart.Name(), config.HelmRegistries)
+			}
 
 			if *infoMetric == true {
 				statsInfo.WithLabelValues(chart, releaseName, version, appVersion, strconv.FormatInt(updated, 10), namespace, latestVersion).Set(status)
@@ -127,7 +133,7 @@ func runStats(config config.Config) {
 
 func getLatestChartVersionFromHelm(name string, helmRegistries registries.HelmRegistries) (version string) {
 	version = helmRegistries.GetLatestVersionFromHelm(name)
-	log.Warnf("last chart repo version is  %v", version)
+	log.WithField("chart", name).Debugf("last chart repo version is  %v", version)
 	return
 }
 
