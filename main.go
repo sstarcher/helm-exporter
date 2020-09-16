@@ -119,7 +119,6 @@ func runStats(config config.Config) {
 
 			if *fetchLatest {
 				latestVersion = getLatestChartVersionFromHelm(item.Chart.Name(), config.HelmRegistries)
-				//latestVersion := "3.1.8"
 			}
 
 			if *infoMetric == true {
