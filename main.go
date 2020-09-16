@@ -117,7 +117,7 @@ func runStats(config config.Config) {
 			status := statusCodeMap[item.Info.Status.String()]
 			latestVersion := ""
 
-			if *latestVersion {
+			if *fetchLatest {
 				latestVersion = getLatestChartVersionFromHelm(item.Chart.Name(), config.HelmRegistries)
 				//latestVersion := "3.1.8"
 			}
