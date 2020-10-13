@@ -10,7 +10,7 @@ import (
 
 const (
 	validReleaseSemverRegex = "^(v?[0-9]*\\.?[0-9]*\\.?[0-9]*)$"
-	validSemverRegex        = "^(v?[0-9]*\\.?[0-9]*\\.?[0-9]*)(-[a-z0-9.]+)?$"
+	validSemverRegex        = "^(v?[0-9]*\\.?[0-9]*\\.?[0-9]*)([-+][a-z0-9.]+)*$"
 	// Major means a major difference between two versions
 	Major = "MAJOR"
 	// Minor means a minor difference between two versions
