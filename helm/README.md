@@ -42,9 +42,9 @@ The following table lists the configurable parameters of the helm-exporter chart
 |-----|------|---------|-------------|
 | affinity | object | `{}` | Assign custom affinity rules for helm-exporter [https://kubernetes.io/docs/concepts/configuration/assign-pod-node/](https://kubernetes.io/docs/concepts/configuration/assign-pod-node/) |
 | config.helmRegistries.overrideChartNames | object | `{}` | Provide a name to substitute for the full names of resources e.g. `mysql: stable/mysql` |
-| config.override[0].allowAllReleases | bool | `true` | This allows all semver versions, like release candidates or custom suffixes. |
-| config.override[0].charts | list | `[]` | Chart names for the override (chart) registry/repo url |
-| config.override[0].registry.url | string | `""` |  Url to the index file for a custom helm repo |
+| config.helmRegistries.override[0].allowAllReleases | bool | `true` | This allows all semver versions, like release candidates or custom suffixes. |
+| config.helmRegistries.override[0].charts | list | `[]` | Chart names for the override (chart) registry/repo url |
+| config.helmRegistries.override[0].registry.url | string | `""` |  Url to the index file for a custom helm repo |
 | fullnameOverride | string | `""` | Provide a name to substitute for the full names of resources |
 | image.pullPolicy | string | `"Always"` | Image pull policy for the webhook integration jobs |
 | image.repository | string | `"sstarcher/helm-exporter"` | Repository to use for the webhook integration jobs |
