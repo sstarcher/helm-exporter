@@ -90,10 +90,10 @@ config:
 #      mysql: stable/test
 # If the helm charts are not stored on hub.helm.sh then a custom registry can be configured here.
 # Currently only index.yaml registry is supported (helm supports other registries as well)
-  override:
-    - registry:
-        url: "" # https://some.url/index.yaml # Url to the index file
-      charts: [] # Chart names
-#        - splunk
-#        - falco-eks-audit-bridge
-      allowAllReleases: true # This allows all semver versions, like release candidates or custom suffixes. Default is false
+    override:
+      - registry:
+          url: "" # https://some.url/index.yaml # Url to the index file
+        charts: [] # Chart names
+#         - splunk
+#         - falco-eks-audit-bridge
+        allowAllReleases: true # This allows all semver versions, like release candidates or custom suffixes. Default is false
