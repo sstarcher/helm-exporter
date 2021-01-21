@@ -37,14 +37,15 @@ var (
 	settings = cli.New()
 	clients  = cmap.New()
 
-	runIntervalDuration = time.Second * 30
-	mutex               = sync.RWMutex{}
+	mutex = sync.RWMutex{}
 
 	statsInfo      *prometheus.GaugeVec
 	statsTimestamp *prometheus.GaugeVec
 
 	namespaces = flag.String("namespaces", "", "namespaces to monitor.  Defaults to all")
 	configFile = flag.String("config", "", "Configfile to load for helm overwrite registries.  Default is empty")
+
+	intervalDuration = flag.String("interval-duration", "0", "Enable metrics gathering in background, each given duration. If not provided, the helm stats are computed synchronously.  Default is 0")
 
 	infoMetric      = flag.Bool("info-metric", true, "Generate info metric.  Defaults to true")
 	timestampMetric = flag.Bool("timestamp-metric", true, "Generate timestamps metric.  Defaults to true")
@@ -72,38 +73,47 @@ func initFlags() config.AppConfig {
 	return *cliFlags
 }
 
-func configureMetrics() (*prometheus.GaugeVec, *prometheus.GaugeVec) {
-	info := prometheus.NewGaugeVec(prometheus.GaugeOpts{
-		Name: "helm_chart_info",
-		Help: "Information on helm releases",
-	}, []string{
-		"chart",
-		"release",
-		"version",
-		"appVersion",
-		"updated",
-		"namespace",
-		"latestVersion",
-	})
+func configureMetrics() (info *prometheus.GaugeVec, timestamp *prometheus.GaugeVec) {
+	if *infoMetric == true {
+		info = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+			Name: "helm_chart_info",
+			Help: "Information on helm releases",
+		}, []string{
+			"chart",
+			"release",
+			"version",
+			"appVersion",
+			"updated",
+			"namespace",
+			"latestVersion",
+		})
+	}
 
-	timestamp := prometheus.NewGaugeVec(prometheus.GaugeOpts{
-		Name: "helm_chart_timestamp",
-		Help: "Timestamps of helm releases",
-	}, []string{
-		"chart",
-		"release",
-		"version",
-		"appVersion",
-		"updated",
-		"namespace",
-		"latestVersion",
-	})
+	if *timestampMetric == true {
+		timestamp = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+			Name: "helm_chart_timestamp",
+			Help: "Timestamps of helm releases",
+		}, []string{
+			"chart",
+			"release",
+			"version",
+			"appVersion",
+			"updated",
+			"namespace",
+			"latestVersion",
+		})
+	}
 
-	return info, timestamp
+	return
 }
 
-func runStats(config config.Config) (*prometheus.GaugeVec, *prometheus.GaugeVec) {
-	info, timestamp := configureMetrics()
+func runStats(config config.Config, info *prometheus.GaugeVec, timestamp *prometheus.GaugeVec) {
+	if info != nil {
+		info.Reset()
+	}
+	if timestamp != nil {
+		timestamp.Reset()
+	}
 
 	for _, client := range clients.Items() {
 		list := action.NewList(client.(*action.Configuration))
@@ -127,16 +137,14 @@ func runStats(config config.Config) (*prometheus.GaugeVec, *prometheus.GaugeVec)
 				latestVersion = getLatestChartVersionFromHelm(item.Chart.Name(), config.HelmRegistries)
 			}
 
-			if *infoMetric == true {
+			if info != nil {
 				info.WithLabelValues(chart, releaseName, version, appVersion, strconv.FormatInt(updated, 10), namespace, latestVersion).Set(status)
 			}
-			if *timestampMetric == true {
+			if timestamp != nil {
 				timestamp.WithLabelValues(chart, releaseName, version, appVersion, strconv.FormatInt(updated, 10), namespace, latestVersion).Set(float64(updated))
 			}
 		}
 	}
-
-	return info, timestamp
 }
 
 func getLatestChartVersionFromHelm(name string, helmRegistries registries.HelmRegistries) (version string) {
@@ -147,13 +155,14 @@ func getLatestChartVersionFromHelm(name string, helmRegistries registries.HelmRe
 
 func runStatsPeriodically(interval time.Duration, config config.Config) {
 	for {
-		info, timestamp := runStats(config)
-		switchMetrics(prometheus.DefaultRegisterer, info, timestamp)
+		info, timestamp := configureMetrics()
+		runStats(config, info, timestamp)
+		registerMetrics(prometheus.DefaultRegisterer, info, timestamp)
 		time.Sleep(interval)
 	}
 }
 
-func switchMetrics(register prometheus.Registerer, info, timestamp *prometheus.GaugeVec) {
+func registerMetrics(register prometheus.Registerer, info, timestamp *prometheus.GaugeVec) {
 	mutex.Lock()
 	defer mutex.Unlock()
 
@@ -170,10 +179,15 @@ func switchMetrics(register prometheus.Registerer, info, timestamp *prometheus.G
 	statsTimestamp = timestamp
 }
 
-func newHelmStatsHandler() http.HandlerFunc {
+func newHelmStatsHandler(config config.Config, synchrone bool) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		mutex.RLock()
-		defer mutex.RUnlock()
+		if synchrone {
+			runStats(config, statsInfo, statsTimestamp)
+		} else {
+			mutex.RLock()
+			defer mutex.RUnlock()
+		}
+
 		prometheusHandler.ServeHTTP(w, r)
 	}
 }
@@ -233,6 +247,11 @@ func main() {
 	cliFlags := initFlags()
 	config := config.LoadConfiguration(cliFlags.ConfigFile)
 
+	runIntervalDuration, err := time.ParseDuration(*intervalDuration)
+	if err != nil {
+		log.Fatalf("invalid duration `%s`: %s", *intervalDuration, err)
+	}
+
 	if namespaces == nil || *namespaces == "" {
 		go informer()
 	} else {
@@ -241,9 +260,14 @@ func main() {
 		}
 	}
 
-	go runStatsPeriodically(runIntervalDuration, config)
+	if runIntervalDuration != 0 {
+		go runStatsPeriodically(runIntervalDuration, config)
+	} else {
+		info, timestamp := configureMetrics()
+		registerMetrics(prometheus.DefaultRegisterer, info, timestamp)
+	}
 
-	http.HandleFunc("/metrics", newHelmStatsHandler())
+	http.HandleFunc("/metrics", newHelmStatsHandler(config, runIntervalDuration == 0))
 	http.HandleFunc("/healthz", healthz)
 	log.Fatal(http.ListenAndServe(":9571", nil))
 }
