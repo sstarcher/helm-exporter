@@ -3,6 +3,7 @@ namespaces: ""
 infoMetric: true
 timestampMetric: true
 latestChartVersion: true
+intervalDuration: 0
 
 serviceMonitor:
   # Specifies whether a ServiceMonitor should be created
