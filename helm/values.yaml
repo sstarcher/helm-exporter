@@ -17,6 +17,8 @@ replicaCount: 1
 
 image:
   repository: sstarcher/helm-exporter
+  # Overrides the image tag whose default is the chart version.
+  tag: ""
   pullPolicy: Always
 
 imagePullSecrets: []
