@@ -70,7 +70,7 @@ The following table lists the configurable parameters of the helm-exporter chart
 | serviceAccount.create | bool | `true` | Create a default serviceaccount to use |
 | serviceAccount.name | string | `default` | Name for prometheus serviceaccount |
 | serviceMonitor.create | bool | `false` | Set to true if using the Prometheus Operator |
-| serviceMonitor.interval | string | `nil` | Interval at which metrics should be scraped |
+| serviceMonitor.interval | string | `nil` | Interval at which metrics should be scraped in nanoseconds. |
 | serviceMonitor.namespace | string | `nil` | The namespace where the Prometheus Operator is deployed |
 | serviceMonitor.additionalLabels |object | `{}` | Additional labels to add to the ServiceMonitor	|
 | serviceMonitor.scrapeTimeout | string | `nil` | Scrape Timeout when the metrics endpoint is scraped |
