@@ -40,6 +40,11 @@ podSecurityContext: {}
 
 podAnnotations: {}
 
+env: []
+  # e.g. secret environment variable:
+  # - name: no_proxy
+  #   value: no_proxy
+
 securityContext: {}
   # capabilities:
   #   drop:
