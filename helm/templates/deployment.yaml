@@ -58,6 +58,10 @@ spec:
             {{- with .Values.intervalDuration }}
             - "-interval-duration={{ . }}"
             {{- end }}
+          {{- if .Values.env }}
+          env:
+{{ toYaml .Values.env | indent 12}}
+          {{- end }}
           ports:
             - name: http
               containerPort: 9571
