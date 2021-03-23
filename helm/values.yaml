@@ -41,9 +41,9 @@ podSecurityContext: {}
 podAnnotations: {}
 
 env: []
-  # e.g. secret environment variable:
+  # e.g. no_proxy environment variable:
   # - name: no_proxy
-  #   value: no_proxy
+  #   value: localhost
 
 securityContext: {}
   # capabilities:
