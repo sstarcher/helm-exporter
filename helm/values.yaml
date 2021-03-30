@@ -39,6 +39,7 @@ podSecurityContext: {}
   # fsGroup: 2000
 
 podAnnotations: {}
+podLabels: {}
 
 env: []
   # e.g. no_proxy environment variable:
