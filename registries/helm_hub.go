@@ -11,18 +11,13 @@ import (
 
 var errMultipleCharts = errors.New("multiple charts found")
 
-// Charts is data structure coming from hub.helm.sh
-type Charts struct {
-	Data []Chart `json:"data"`
-}
-
-// Chart contains attribute information for a chart coming from hub.helm.sh
+// Chart contains attribute information for a chart
 type Chart struct {
-	Attributes Attributes `json:"attributes"`
+	AvailableVersions []AvailableVersions `json:"available_versions"`
 }
 
-// Attributes contains version information for a chart coming from hub.helm.sh
-type Attributes struct {
+// AvailableVersions contains list of versions for a chart
+type AvailableVersions struct {
 	Version string `json:"version"`
 }
 
@@ -85,7 +80,7 @@ func findChart(chart string) (string, error) {
 }
 
 func getChartVersions(chart string) ([]string, error) {
-	url := fmt.Sprintf("https://hub.helm.sh/api/chartsvc/v1/charts/%s/versions", chart)
+	url := fmt.Sprintf("https://artifacthub.io/api/v1/packages/helm/%s", chart)
 	resp, err := http.Get(url)
 	if err != nil {
 		return nil, err
@@ -93,15 +88,15 @@ func getChartVersions(chart string) ([]string, error) {
 
 	defer resp.Body.Close()
 
-	chartsData := Charts{}
-	err = json.NewDecoder(resp.Body).Decode(&chartsData)
+	chartData := Chart{}
+	err = json.NewDecoder(resp.Body).Decode(&chartData)
 	if err != nil {
 		return nil, err
 	}
 
 	var versions []string
-	for _, data := range chartsData.Data {
-		versions = append(versions, data.Attributes.Version)
+	for _, data := range chartData.AvailableVersions {
+		versions = append(versions, data.Version)
 	}
 	return versions, nil
 }
