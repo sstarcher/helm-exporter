@@ -67,6 +67,7 @@ The following table lists the configurable parameters of the helm-exporter chart
 | securityContext | object | `{}` | SecurityContext for a container |
 | service.port | int | `9571` | Port for Service to listen on. |
 | service.type | string | `"ClusterIP"` | Service type |
+| service.customScrapeEnableAnnotation | string | `""` | Custom annotation to enable scraping. If empty, `prometheus.io/scrape: "true"` will be used |
 | serviceAccount.create | bool | `true` | Create a default serviceaccount to use |
 | serviceAccount.name | string | `default` | Name for prometheus serviceaccount |
 | serviceMonitor.create | bool | `false` | Set to true if using the Prometheus Operator |
