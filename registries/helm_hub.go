@@ -57,8 +57,13 @@ func (h HelmRegistries) useHelmHub(chart string) string {
 }
 
 func findChart(chart string) (string, error) {
-	url := fmt.Sprintf("https://hub.helm.sh/api/chartsvc/v1/charts/search?q=%s", chart)
-	resp, err := http.Get(url)
+	url := fmt.Sprintf("https://artifacthub.io/api/chartsvc/v1/charts/search?q=%s", chart)
+
+	client := &http.Client{}
+  req, err := http.NewRequest("GET", url, nil)
+  req.Header.Set("User-Agent", "Go-http-client/1.1")
+  resp, err := client.Do(req)
+
 	if err != nil {
 		return "", err
 	}
@@ -81,7 +86,7 @@ func findChart(chart string) (string, error) {
 
 func getChartVersions(chart string) ([]string, error) {
 	url := fmt.Sprintf("https://artifacthub.io/api/v1/packages/helm/%s", chart)
-	resp, err := http.Get(url)
+  resp, err := http.Get(url)
 	if err != nil {
 		return nil, err
 	}
