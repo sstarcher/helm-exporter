@@ -2,106 +2,89 @@ package registries
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
-	"github.com/sstarcher/helm-exporter/versioning"
+	"time"
+
 	log "github.com/sirupsen/logrus"
-	"errors"
 )
 
-var errMultipleCharts = errors.New("multiple charts found")
+var (
+	// ErrMultipleCharts multiple charts found
+	ErrMultipleCharts = errors.New("multiple charts found")
+	// ErrNoChartsFound no charts found for the name
+	ErrNoChartsFound = fmt.Errorf("Could not find the chart")
 
-// Chart contains attribute information for a chart
-type Chart struct {
-	AvailableVersions []AvailableVersions `json:"available_versions"`
+	hubCache = artifacthubDump{}
+)
+
+const (
+	baseURL   = "https://artifacthub.io"
+	userAgent = "helm-exporter/1.0"
+)
+
+type artifacthubDump []hubChart
+
+type hubChart struct {
+	Name       string `json:"name"`
+	Version    string `json:"version"`
+	Repository struct {
+		Name string `json:"name"`
+		URL  string `json:"url"`
+	} `json:"repository"`
 }
 
-// AvailableVersions contains list of versions for a chart
-type AvailableVersions struct {
-	Version string `json:"version"`
-}
-
-// SearchResultData contains search results from hub.helm.sh
-type SearchResultData struct {
-	Data []ChartSearchResult `json:"data"`
-}
-
-// ChartSearchResult contains chart search results from hub.helm.sh
-type ChartSearchResult struct {
-	ID string `json:"id"`
-}
-
-func (h HelmRegistries) useHelmHub(chart string) string {
-	chartName := h.OverrideChartNames[chart]
-	if chartName == "" {
-		var err error
-		chartName, err = findChart(chart)
-		if err != nil {
-			if err == errMultipleCharts {
-				log.WithError(err).WithField("chart", chart).Error("Failed to search chart info, found multiple charts.")
-				return versioning.Multiple
-			} else {
-			log.WithError(err).WithField("chart", chart).Error("Failed to search chart info")
-			return versioning.Failure
-			}
-		}
-	}
-
-	versions, err := getChartVersions(chartName)
+func httpGet(endpoint string, data interface{}) error {
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/%s", baseURL, endpoint), nil)
 	if err != nil {
-		log.WithError(err).WithField("chart", chart).Error("Failed to fetch chart info")
-		return versioning.Failure
+		return err
 	}
-
-	return versioning.FindHighestVersionInList(versions, false)
-}
-
-func findChart(chart string) (string, error) {
-	url := fmt.Sprintf("https://artifacthub.io/api/chartsvc/v1/charts/search?q=%s", chart)
+	req.Header.Set("User-Agent", userAgent)
 
 	client := &http.Client{}
-	req, err := http.NewRequest("GET", url, nil)
-	req.Header.Set("User-Agent", "Go-http-client/1.1")
-	resp, err := client.Do(req)
 
+	resp, err := client.Do(req)
 	if err != nil {
-		return "", err
+		return err
 	}
 
 	defer resp.Body.Close()
 
-	searchData := SearchResultData{}
-	err = json.NewDecoder(resp.Body).Decode(&searchData)
-	if err != nil {
-		return "", err
-	}
-
-	if len(searchData.Data) == 0 {
-		return "", fmt.Errorf("Could not find the chart")
-	} else if len(searchData.Data) == 1 {
-		return searchData.Data[0].ID, nil
-	}
-	return "", errMultipleCharts
+	return json.NewDecoder(resp.Body).Decode(data)
 }
 
-func getChartVersions(chart string) ([]string, error) {
-	url := fmt.Sprintf("https://artifacthub.io/api/v1/packages/helm/%s", chart)
-	resp, err := http.Get(url)
+func init() {
+	err := update()
 	if err != nil {
-		return nil, err
+		log.Warnf("failed to update artifacthub cache due to %v ", err)
 	}
 
-	defer resp.Body.Close()
+	go func() {
+		for {
+			time.Sleep(time.Hour)
+			log.Info("updating artifacthub dump")
+			err := update()
+			if err != nil {
+				log.Warnf("failed to update artifacthub cache due to %v ", err)
+			}
+		}
+	}()
+}
 
-	chartData := Chart{}
-	err = json.NewDecoder(resp.Body).Decode(&chartData)
+func update() error {
+	data := &artifacthubDump{}
+	err := httpGet("api/v1/helm-exporter", data)
 	if err != nil {
-		return nil, err
+		return err
+	}
+	for _, val := range *data {
+		if val.Name == "zookeeper" {
+			fmt.Println(val)
+		}
+
 	}
 
-	var versions []string
-	for _, data := range chartData.AvailableVersions {
-		versions = append(versions, data.Version)
-	}
-	return versions, nil
+	hubCache = *data
+	return nil
 }
