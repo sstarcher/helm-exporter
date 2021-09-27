@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"sync"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -17,6 +18,7 @@ var (
 	ErrNoChartsFound = fmt.Errorf("Could not find the chart")
 
 	hubCache = artifacthubDump{}
+	mu       sync.Mutex
 )
 
 const (
@@ -79,6 +81,8 @@ func update() error {
 		return err
 	}
 
+	mu.Lock()
 	hubCache = *data
+	mu.Unlock()
 	return nil
 }

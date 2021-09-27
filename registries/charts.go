@@ -54,6 +54,7 @@ func (h HelmRegistries) fromArtifactHub(chart string) string {
 	logger := log.WithField("chart", chart)
 
 	charts := []hubChart{}
+	mu.Lock()
 	for _, val := range hubCache {
 		if val.Name == chart {
 			if len(h.RegistryNames) == 0 {
@@ -67,6 +68,7 @@ func (h HelmRegistries) fromArtifactHub(chart string) string {
 			}
 		}
 	}
+	mu.Unlock()
 
 	if len(charts) == 0 {
 		logger.Errorf("unable to find any charts for %s", chart)
