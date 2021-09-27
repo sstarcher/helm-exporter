@@ -78,12 +78,6 @@ func update() error {
 	if err != nil {
 		return err
 	}
-	for _, val := range *data {
-		if val.Name == "zookeeper" {
-			fmt.Println(val)
-		}
-
-	}
 
 	hubCache = *data
 	return nil

@@ -69,7 +69,7 @@ func (h HelmRegistries) fromArtifactHub(chart string) string {
 	}
 
 	if len(charts) == 0 {
-		logger.Error("unable to find any charts for %s", chart)
+		logger.Errorf("unable to find any charts for %s", chart)
 		return versioning.Failure
 	} else if len(charts) > 1 {
 		regs := []string{}
