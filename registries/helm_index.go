@@ -5,8 +5,8 @@ import (
 
 	"gopkg.in/yaml.v2"
 
-	"github.com/sstarcher/helm-exporter/versioning"
 	log "github.com/sirupsen/logrus"
+	"github.com/sstarcher/helm-exporter/versioning"
 )
 
 // IndexEntries contains configured Helm indexes

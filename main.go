@@ -9,10 +9,10 @@ import (
 	"time"
 
 	"github.com/sstarcher/helm-exporter/config"
-	"github.com/sstarcher/helm-exporter/registries"
 
 	cmap "github.com/orcaman/concurrent-map"
 
+	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 
 	"os"
@@ -52,6 +52,8 @@ var (
 
 	fetchLatest = flag.Bool("latest-chart-version", true, "Attempt to fetch the latest chart version from registries. Defaults to true")
 
+	verbose = flag.Bool("verbose", false, "Enables debug logging. Defaults to false")
+
 	statusCodeMap = map[string]float64{
 		"unknown":          0,
 		"deployed":         1,
@@ -66,12 +68,6 @@ var (
 
 	prometheusHandler = promhttp.Handler()
 )
-
-func initFlags() config.AppConfig {
-	cliFlags := new(config.AppConfig)
-	cliFlags.ConfigFile = *configFile
-	return *cliFlags
-}
 
 func configureMetrics() (info *prometheus.GaugeVec, timestamp *prometheus.GaugeVec) {
 	if *infoMetric == true {
@@ -134,7 +130,7 @@ func runStats(config config.Config, info *prometheus.GaugeVec, timestamp *promet
 			latestVersion := ""
 
 			if *fetchLatest {
-				latestVersion = getLatestChartVersionFromHelm(item.Chart.Name(), config.HelmRegistries)
+				latestVersion = config.HelmRegistries.GetLatestVersionFromHelm(item.Chart.Name())
 			}
 
 			if info != nil {
@@ -145,12 +141,6 @@ func runStats(config config.Config, info *prometheus.GaugeVec, timestamp *promet
 			}
 		}
 	}
-}
-
-func getLatestChartVersionFromHelm(name string, helmRegistries registries.HelmRegistries) (version string) {
-	version = helmRegistries.GetLatestVersionFromHelm(name)
-	log.WithField("chart", name).Debugf("last chart repo version is  %v", version)
-	return
 }
 
 func runStatsPeriodically(interval time.Duration, config config.Config) {
@@ -244,9 +234,12 @@ func informer() {
 func main() {
 	flagenv.Parse()
 	flag.Parse()
-	cliFlags := initFlags()
-	config := config.LoadConfiguration(cliFlags.ConfigFile)
 
+	if *verbose == true {
+		logrus.SetLevel(logrus.DebugLevel)
+	}
+
+	config := config.New(*configFile)
 	runIntervalDuration, err := time.ParseDuration(*intervalDuration)
 	if err != nil {
 		log.Fatalf("invalid duration `%s`: %s", *intervalDuration, err)
