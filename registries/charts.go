@@ -78,7 +78,7 @@ func (h HelmRegistries) fromArtifactHub(chart string) string {
 		for _, val := range charts {
 			regs = append(regs, val.Repository.Name)
 		}
-		logger.Warnf("faile to search chart info, found multiple registries that contain this chart %s on helm hub[%s], update the configuration to call out your chart registries", chart, strings.Join(regs, ", "))
+		logger.Warnf("found multiple matching charts in artifacthub.io that contain this chart %s on helm hub[%s], specify registryNames to limit the registries", chart, strings.Join(regs, ", "))
 		return versioning.Multiple
 	}
 

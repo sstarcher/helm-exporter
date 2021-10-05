@@ -8,7 +8,7 @@ Exports helm release, chart, and version statistics in the prometheus format.
 # Installation
 ## Prerequisites
 
-- Kubernetes 1.16+
+- Kubernetes 1.19+
 - Helm 3+
 
 ## Get Repo Info
