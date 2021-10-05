@@ -29,6 +29,36 @@ $ helm install helm-exporter sstarcher/helm-exporter
 * `helm install helm-exporter sstarcher/helm-exporter` will install and metrics should scrape automatically if prometheus is running
 * If using Grafana you can use this Dashboard to have a list of what's running https://grafana.com/dashboards/9367
 
+## Configuration for Latest versions
+
+Two options exist for fetching the latest version information for a chart.
+* Direct fetch from a chart repository.  This will download the index for the registry and use that information to fetch the chart.
+
+```yaml
+# Helm configuration
+config:
+  helmRegistries:
+    overrideChartNames: {}
+      mysql: stable/test
+# If the helm charts are not stored on hub.helm.sh then a custom registry can be configured here.
+# Currently only index.yaml registry is supported (helm supports other registries as well)
+    override:
+      - registry:
+          url: "https://some.url/index.yaml" # Url to the index file
+        charts: # Chart names
+        - splunk
+        - falco-eks-audit-bridge
+```
+
+* Query https://artifacthub.io for the chart matching your chart name and only using the specified registries.  If no registry name is specified and multiple charts match from helm hub no version will be found and it will log a warning.
+```yaml
+# Helm configuration
+config:
+  helmRegistries:
+    registryNames:
+    - bitnami
+```
+
 # Metrics
 * http://host:9571/metrics
 

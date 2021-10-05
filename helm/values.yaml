@@ -106,3 +106,4 @@ config:
 #         - splunk
 #         - falco-eks-audit-bridge
         allowAllReleases: true # This allows all semver versions, like release candidates or custom suffixes. Default is false
+    registryNames: [] # Used to filter accepted registries from helm hub
