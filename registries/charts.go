@@ -71,14 +71,14 @@ func (h HelmRegistries) fromArtifactHub(chart string) string {
 	mu.Unlock()
 
 	if len(charts) == 0 {
-		logger.Errorf("unable to find any charts for %s", chart)
+		logger.Warnf("unable to find any charts matching %s on artifacthub", chart)
 		return versioning.Failure
 	} else if len(charts) > 1 {
 		regs := []string{}
 		for _, val := range charts {
 			regs = append(regs, val.Repository.Name)
 		}
-		logger.Errorf("Failed to search chart info, found multiple registries that contain this %s [%s].", chart, strings.Join(regs, ", "))
+		logger.Warnf("faile to search chart info, found multiple registries that contain this chart %s on helm hub[%s], update the configuration to call out your chart registries", chart, strings.Join(regs, ", "))
 		return versioning.Multiple
 	}
 
