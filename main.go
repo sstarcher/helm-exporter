@@ -7,6 +7,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	semver "github.com/Masterminds/semver"
 
 	"github.com/sstarcher/helm-exporter/config"
 
@@ -82,7 +83,7 @@ func configureMetrics() (info *prometheus.GaugeVec, timestamp *prometheus.GaugeV
 			"updated",
 			"namespace",
 			"latestVersion",
-		})
+			"versionOutdated"})
 	}
 
 	if *timestampMetric == true {
@@ -97,7 +98,7 @@ func configureMetrics() (info *prometheus.GaugeVec, timestamp *prometheus.GaugeV
 			"updated",
 			"namespace",
 			"latestVersion",
-		})
+			"versionOutdated"})
 	}
 
 	return
@@ -128,16 +129,28 @@ func runStats(config config.Config, info *prometheus.GaugeVec, timestamp *promet
 			namespace := item.Namespace
 			status := statusCodeMap[item.Info.Status.String()]
 			latestVersion := ""
+			versionOutdated := false
 
 			if *fetchLatest {
 				latestVersion = config.HelmRegistries.GetLatestVersionFromHelm(item.Chart.Name())
 			}
 
+			lv, err := semver.NewVersion(latestVersion)
+			if err == nil {
+				log.WithField("chart", chart).WithField("version", version).WithField("latest", latestVersion).Info("Comparing versions")
+				lc, err := semver.NewConstraint(">" + version)
+				if err == nil {
+					a := lc.Check(lv)
+					log.WithField("chart", chart).WithField("version", version).WithField("latest", latestVersion).Debug("Comparison if latest version is greater than current resulted in ", a)
+					versionOutdated = a
+				}
+            }
+
 			if info != nil {
-				info.WithLabelValues(chart, releaseName, version, appVersion, strconv.FormatInt(updated, 10), namespace, latestVersion).Set(status)
+				info.WithLabelValues(chart, releaseName, version, appVersion, strconv.FormatInt(updated, 10), namespace, latestVersion, strconv.FormatBool(versionOutdated)).Set(status)
 			}
 			if timestamp != nil {
-				timestamp.WithLabelValues(chart, releaseName, version, appVersion, strconv.FormatInt(updated, 10), namespace, latestVersion).Set(float64(updated))
+				timestamp.WithLabelValues(chart, releaseName, version, appVersion, strconv.FormatInt(updated, 10), namespace, latestVersion, strconv.FormatBool(versionOutdated)).Set(float64(updated))
 			}
 		}
 	}
