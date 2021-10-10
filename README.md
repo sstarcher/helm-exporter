@@ -64,9 +64,24 @@ config:
 
 # Format
 ```
+# HELP helm_chart_info Information on helm releases
+# TYPE helm_chart_info gauge
 helm_chart_info{chart="ark",release="ark",version="1.2.1",latestVersion="1.2.3",appVersion="1.2.3",updated="1553201431",namespace="test"} 1
 helm_chart_info{chart="cluster-autoscaler",release="cluster-autoscaler",version="0.7.0",latestVersion=7.3.2,appVersion="",updated="1553201431",namespace="other"} 4
 helm_chart_info{chart="dex",release="dex",version="0.1.0",latestVersion="3.4.0",appVersion="1.2.3",updated="1553201431",namespace="test"} 1
+
+# HELP helm_chart_outdated Outdated helm versions of helm releases
+# TYPE helm_chart_outdated gauge
+helm_chart_outdated{chart="ark",latestVersion="1.2.3",namespace="test",release="ark",version="1.2.1"} 1
+helm_chart_outdated{chart="cluster-autoscaler",latestVersion="7.3.2",namespace="other",release="cluster-autoscaler",version="0.7.0"} 1
+helm_chart_outdated{chart="external-secrets",latestVersion="3.4.0",namespace="test",release="dex",version="0.1.0"} 1
+
+# HELP helm_chart_timestamp Timestamps of helm releases
+# TYPE helm_chart_timestamp gauge
+helm_chart_timestamp{chart="ark",release="ark",version="1.2.1",latestVersion="1.2.3",appVersion="1.2.3",updated="1553201431",namespace="test"} 1.617197959e+12
+helm_chart_timestamp{chart="cluster-autoscaler",release="cluster-autoscaler",version="0.7.0",latestVersion=7.3.2,appVersion="",updated="1553201431",namespace="other"} 1.617196128e+12
+helm_chart_timestamp{chart="dex",release="dex",version="0.1.0",latestVersion="3.4.0",appVersion="1.2.3",updated="1553201431",namespace="test"} 1.62245881e+12
+
 ```
 
 The metric value is the helm status code.  These status codes indexes do not map up directly to helm.  This is so I can make the bad cases negative values.
