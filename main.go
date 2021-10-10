@@ -109,8 +109,6 @@ func configureMetrics() (info *prometheus.GaugeVec, timestamp *prometheus.GaugeV
 			"chart",
 			"release",
 			"version",
-			"appVersion",
-			"updated",
 			"namespace",
 			"latestVersion"})
 	}
@@ -172,7 +170,7 @@ func runStats(config config.Config, info *prometheus.GaugeVec, timestamp *promet
 				info.WithLabelValues(chart, releaseName, version, appVersion, strconv.FormatInt(updated, 10), namespace, latestVersion).Set(status)
 			}
 			if timestamp != nil {
-				timestamp.WithLabelValues(chart, releaseName, version, appVersion, strconv.FormatInt(updated, 10), namespace, latestVersion).Set(float64(updated))
+				timestamp.WithLabelValues(chart, releaseName, version, namespace, latestVersion).Set(float64(updated))
 			}
 		}
 	}
