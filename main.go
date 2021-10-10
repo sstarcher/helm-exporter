@@ -158,7 +158,7 @@ func runStats(config config.Config, info *prometheus.GaugeVec, timestamp *promet
 					a := lc.Check(lv)
 					if a {
 						if outdated != nil {
-							outdated.WithLabelValues(chart, releaseName, version, appVersion, strconv.FormatInt(updated, 10), namespace, latestVersion).Set(1)
+							outdated.WithLabelValues(chart, releaseName, version, namespace, latestVersion).Set(1)
 						}
 					}
 				} else {
@@ -170,7 +170,7 @@ func runStats(config config.Config, info *prometheus.GaugeVec, timestamp *promet
 				info.WithLabelValues(chart, releaseName, version, appVersion, strconv.FormatInt(updated, 10), namespace, latestVersion).Set(status)
 			}
 			if timestamp != nil {
-				timestamp.WithLabelValues(chart, releaseName, version, namespace, latestVersion).Set(float64(updated))
+				timestamp.WithLabelValues(chart, releaseName, version, appVersion, strconv.FormatInt(updated, 10), namespace, latestVersion).Set(float64(updated))
 			}
 		}
 	}
