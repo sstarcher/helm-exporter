@@ -3,6 +3,17 @@ module github.com/sstarcher/helm-exporter
 go 1.17
 
 require (
+	github.com/Masterminds/semver v1.5.0
+	github.com/facebookgo/flagenv v0.0.0-20160425205200-fcd59fca7456
+	github.com/knadh/koanf v1.2.4
+	github.com/mcuadros/go-version v0.0.0-20190830083331-035f6764e8d2
+	github.com/orcaman/concurrent-map v0.0.0-20210501183033-44dafcb38ecc
+	github.com/prometheus/client_golang v1.11.0
+	github.com/sirupsen/logrus v1.8.1
+	gopkg.in/yaml.v2 v2.4.0
+	helm.sh/helm/v3 v3.7.0
+	k8s.io/apimachinery v0.22.2
+	k8s.io/client-go v0.22.2
 	cloud.google.com/go v0.97.0 // indirect
 	github.com/Azure/go-ansiterm v0.0.0-20210617225240-d185dfc1b5a1 // indirect
 	github.com/Azure/go-autorest v14.2.0+incompatible // indirect
@@ -40,7 +51,6 @@ require (
 	github.com/evanphx/json-patch v4.11.0+incompatible // indirect
 	github.com/exponent-io/jsonpath v0.0.0-20210407135951-1de76d718b3f // indirect
 	github.com/facebookgo/ensure v0.0.0-20160127193407-b4ab57deab51 // indirect
-	github.com/facebookgo/flagenv v0.0.0-20160425205200-fcd59fca7456
 	github.com/facebookgo/stack v0.0.0-20160209184415-751773369052 // indirect
 	github.com/facebookgo/subset v0.0.0-20150612182917-8dac2c3c4870 // indirect
 	github.com/fatih/color v1.13.0 // indirect
@@ -73,7 +83,6 @@ require (
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/kardianos/osext v0.0.0-20170510131534-ae77be60afb1 // indirect
 	github.com/klauspost/compress v1.13.6 // indirect
-	github.com/knadh/koanf v1.2.4
 	github.com/lann/builder v0.0.0-20180802200727-47ae307949d0 // indirect
 	github.com/lann/ps v0.0.0-20150810152359-62de8c46ede0 // indirect
 	github.com/lib/pq v1.10.3 // indirect
@@ -83,7 +92,6 @@ require (
 	github.com/mattn/go-isatty v0.0.14 // indirect
 	github.com/mattn/go-runewidth v0.0.13 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.2-0.20181231171920-c182affec369 // indirect
-	github.com/mcuadros/go-version v0.0.0-20190830083331-035f6764e8d2
 	github.com/mitchellh/copystructure v1.2.0 // indirect
 	github.com/mitchellh/go-wordwrap v1.0.1 // indirect
 	github.com/mitchellh/mapstructure v1.4.2 // indirect
@@ -97,11 +105,9 @@ require (
 	github.com/morikuni/aec v1.0.0 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.0.1 // indirect
-	github.com/orcaman/concurrent-map v0.0.0-20210501183033-44dafcb38ecc
 	github.com/peterbourgon/diskv v2.0.1+incompatible // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/prometheus/client_golang v1.11.0
 	github.com/prometheus/client_model v0.2.0 // indirect
 	github.com/prometheus/common v0.31.1 // indirect
 	github.com/prometheus/procfs v0.7.3 // indirect
@@ -109,7 +115,6 @@ require (
 	github.com/rubenv/sql-migrate v0.0.0-20210614095031-55d5740dbbcc // indirect
 	github.com/russross/blackfriday v1.6.0 // indirect
 	github.com/shopspring/decimal v1.2.0 // indirect
-	github.com/sirupsen/logrus v1.8.1
 	github.com/spf13/cast v1.4.1 // indirect
 	github.com/spf13/cobra v1.2.1 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
@@ -135,15 +140,11 @@ require (
 	google.golang.org/protobuf v1.27.1 // indirect
 	gopkg.in/gorp.v1 v1.7.2 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
-	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
-	helm.sh/helm/v3 v3.7.0
 	k8s.io/api v0.22.2 // indirect
 	k8s.io/apiextensions-apiserver v0.22.2 // indirect
-	k8s.io/apimachinery v0.22.2
 	k8s.io/apiserver v0.22.2 // indirect
 	k8s.io/cli-runtime v0.22.2 // indirect
-	k8s.io/client-go v0.22.2
 	k8s.io/component-base v0.22.2 // indirect
 	k8s.io/klog/v2 v2.20.0 // indirect
 	k8s.io/kube-openapi v0.0.0-20210929172449-94abcedd1aa4 // indirect
