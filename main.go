@@ -42,6 +42,7 @@ var (
 
 	statsInfo      *prometheus.GaugeVec
 	statsTimestamp *prometheus.GaugeVec
+	statsOutdated  *prometheus.GaugeVec
 
 	namespaces = flag.String("namespaces", "", "namespaces to monitor.  Defaults to all")
 	configFile = flag.String("config", "", "Configfile to load for helm overwrite registries.  Default is empty")
@@ -50,6 +51,7 @@ var (
 
 	infoMetric      = flag.Bool("info-metric", true, "Generate info metric.  Defaults to true")
 	timestampMetric = flag.Bool("timestamp-metric", true, "Generate timestamps metric.  Defaults to true")
+	outdatedMetric = flag.Bool("outdated-metric", true, "Generate version outdated metric.  Defaults to true")
 
 	fetchLatest = flag.Bool("latest-chart-version", true, "Attempt to fetch the latest chart version from registries. Defaults to true")
 
@@ -70,7 +72,7 @@ var (
 	prometheusHandler = promhttp.Handler()
 )
 
-func configureMetrics() (info *prometheus.GaugeVec, timestamp *prometheus.GaugeVec) {
+func configureMetrics() (info *prometheus.GaugeVec, timestamp *prometheus.GaugeVec, outdated *prometheus.GaugeVec) {
 	if *infoMetric == true {
 		info = prometheus.NewGaugeVec(prometheus.GaugeOpts{
 			Name: "helm_chart_info",
@@ -82,8 +84,7 @@ func configureMetrics() (info *prometheus.GaugeVec, timestamp *prometheus.GaugeV
 			"appVersion",
 			"updated",
 			"namespace",
-			"latestVersion",
-			"versionOutdated"})
+			"latestVersion"})
 	}
 
 	if *timestampMetric == true {
@@ -97,19 +98,36 @@ func configureMetrics() (info *prometheus.GaugeVec, timestamp *prometheus.GaugeV
 			"appVersion",
 			"updated",
 			"namespace",
-			"latestVersion",
-			"versionOutdated"})
+			"latestVersion"})
+	}
+
+	if *outdatedMetric == true {
+		outdated = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+			Name: "helm_chart_outdated",
+			Help: "Outdated helm versions of helm releases",
+		}, []string{
+			"chart",
+			"release",
+			"version",
+			"appVersion",
+			"updated",
+			"namespace",
+			"latestVersion"})
 	}
 
 	return
 }
 
-func runStats(config config.Config, info *prometheus.GaugeVec, timestamp *prometheus.GaugeVec) {
+func runStats(config config.Config, info *prometheus.GaugeVec, timestamp *prometheus.GaugeVec, outdated *prometheus.GaugeVec) {
 	if info != nil {
 		info.Reset()
 	}
 	if timestamp != nil {
 		timestamp.Reset()
+	}
+
+	if outdated != nil {
+		outdated.Reset()
 	}
 
 	for _, client := range clients.Items() {
@@ -129,7 +147,6 @@ func runStats(config config.Config, info *prometheus.GaugeVec, timestamp *promet
 			namespace := item.Namespace
 			status := statusCodeMap[item.Info.Status.String()]
 			latestVersion := ""
-			versionOutdated := false
 
 			if *fetchLatest {
 				latestVersion = config.HelmRegistries.GetLatestVersionFromHelm(item.Chart.Name())
@@ -137,20 +154,25 @@ func runStats(config config.Config, info *prometheus.GaugeVec, timestamp *promet
 
 			lv, err := semver.NewVersion(latestVersion)
 			if err == nil {
-				log.WithField("chart", chart).WithField("version", version).WithField("latest", latestVersion).Info("Comparing versions")
+				log.WithField("chart", chart).WithField("version", version).WithField("latest", latestVersion).Debug("Comparing versions")
 				lc, err := semver.NewConstraint(">" + version)
 				if err == nil {
 					a := lc.Check(lv)
-					log.WithField("chart", chart).WithField("version", version).WithField("latest", latestVersion).Debug("Comparison if latest version is greater than current resulted in ", a)
-					versionOutdated = a
+					if a {
+						if outdated != nil {
+							outdated.WithLabelValues(chart, releaseName, version, appVersion, strconv.FormatInt(updated, 10), namespace, latestVersion).Set(1)
+						}
+					}
+				} else {
+					log.WithField("chart", chart).WithField("version", version).WithField("latest", latestVersion).Error("%s", err)
 				}
             }
 
 			if info != nil {
-				info.WithLabelValues(chart, releaseName, version, appVersion, strconv.FormatInt(updated, 10), namespace, latestVersion, strconv.FormatBool(versionOutdated)).Set(status)
+				info.WithLabelValues(chart, releaseName, version, appVersion, strconv.FormatInt(updated, 10), namespace, latestVersion).Set(status)
 			}
 			if timestamp != nil {
-				timestamp.WithLabelValues(chart, releaseName, version, appVersion, strconv.FormatInt(updated, 10), namespace, latestVersion, strconv.FormatBool(versionOutdated)).Set(float64(updated))
+				timestamp.WithLabelValues(chart, releaseName, version, appVersion, strconv.FormatInt(updated, 10), namespace, latestVersion).Set(float64(updated))
 			}
 		}
 	}
@@ -158,14 +180,14 @@ func runStats(config config.Config, info *prometheus.GaugeVec, timestamp *promet
 
 func runStatsPeriodically(interval time.Duration, config config.Config) {
 	for {
-		info, timestamp := configureMetrics()
-		runStats(config, info, timestamp)
-		registerMetrics(prometheus.DefaultRegisterer, info, timestamp)
+		info, timestamp, outdated := configureMetrics()
+		runStats(config, info, timestamp, outdated)
+		registerMetrics(prometheus.DefaultRegisterer, info, timestamp, outdated)
 		time.Sleep(interval)
 	}
 }
 
-func registerMetrics(register prometheus.Registerer, info, timestamp *prometheus.GaugeVec) {
+func registerMetrics(register prometheus.Registerer, info, timestamp *prometheus.GaugeVec, outdated *prometheus.GaugeVec) {
 	mutex.Lock()
 	defer mutex.Unlock()
 
@@ -180,12 +202,18 @@ func registerMetrics(register prometheus.Registerer, info, timestamp *prometheus
 	}
 	register.MustRegister(timestamp)
 	statsTimestamp = timestamp
+
+	if statsOutdated != nil {
+		register.Unregister(statsOutdated)
+	}
+	register.MustRegister(outdated)
+	statsOutdated = outdated
 }
 
 func newHelmStatsHandler(config config.Config, synchrone bool) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if synchrone {
-			runStats(config, statsInfo, statsTimestamp)
+			runStats(config, statsInfo, statsTimestamp,statsOutdated)
 		} else {
 			mutex.RLock()
 			defer mutex.RUnlock()
@@ -269,8 +297,8 @@ func main() {
 	if runIntervalDuration != 0 {
 		go runStatsPeriodically(runIntervalDuration, config)
 	} else {
-		info, timestamp := configureMetrics()
-		registerMetrics(prometheus.DefaultRegisterer, info, timestamp)
+		info, timestamp, outdated := configureMetrics()
+		registerMetrics(prometheus.DefaultRegisterer, info, timestamp, outdated)
 	}
 
 	http.HandleFunc("/metrics", newHelmStatsHandler(config, runIntervalDuration == 0))

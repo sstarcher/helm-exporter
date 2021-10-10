@@ -14,9 +14,6 @@ require (
 	helm.sh/helm/v3 v3.7.0
 	k8s.io/apimachinery v0.22.2
 	k8s.io/client-go v0.22.2
-)
-
-require (
 	cloud.google.com/go v0.97.0 // indirect
 	github.com/Azure/go-ansiterm v0.0.0-20210617225240-d185dfc1b5a1 // indirect
 	github.com/Azure/go-autorest v14.2.0+incompatible // indirect
