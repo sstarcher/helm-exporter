@@ -7,6 +7,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+
 	semver "github.com/Masterminds/semver"
 
 	"github.com/sstarcher/helm-exporter/config"
@@ -51,7 +52,7 @@ var (
 
 	infoMetric      = flag.Bool("info-metric", true, "Generate info metric.  Defaults to true")
 	timestampMetric = flag.Bool("timestamp-metric", true, "Generate timestamps metric.  Defaults to true")
-	outdatedMetric = flag.Bool("outdated-metric", true, "Generate version outdated metric.  Defaults to true")
+	outdatedMetric  = flag.Bool("outdated-metric", true, "Generate version outdated metric.  Defaults to true")
 
 	fetchLatest = flag.Bool("latest-chart-version", true, "Attempt to fetch the latest chart version from registries. Defaults to true")
 
@@ -82,9 +83,11 @@ func configureMetrics() (info *prometheus.GaugeVec, timestamp *prometheus.GaugeV
 			"release",
 			"version",
 			"appVersion",
+			"revision",
 			"updated",
 			"namespace",
-			"latestVersion"})
+			"latestVersion",
+			"description"})
 	}
 
 	if *timestampMetric == true {
@@ -144,6 +147,8 @@ func runStats(config config.Config, info *prometheus.GaugeVec, timestamp *promet
 			updated := item.Info.LastDeployed.Unix() * 1000
 			namespace := item.Namespace
 			status := statusCodeMap[item.Info.Status.String()]
+			revision := item.Version
+			description := item.Info.Description
 			latestVersion := ""
 
 			if *fetchLatest {
@@ -164,10 +169,10 @@ func runStats(config config.Config, info *prometheus.GaugeVec, timestamp *promet
 				} else {
 					log.WithField("chart", chart).WithField("version", version).WithField("latest", latestVersion).Error("%s", err)
 				}
-            }
+			}
 
 			if info != nil {
-				info.WithLabelValues(chart, releaseName, version, appVersion, strconv.FormatInt(updated, 10), namespace, latestVersion).Set(status)
+				info.WithLabelValues(chart, releaseName, version, appVersion, strconv.FormatInt(int64(revision), 10), strconv.FormatInt(updated, 10), namespace, latestVersion, description).Set(status)
 			}
 			if timestamp != nil {
 				timestamp.WithLabelValues(chart, releaseName, version, appVersion, strconv.FormatInt(updated, 10), namespace, latestVersion).Set(float64(updated))
@@ -211,7 +216,7 @@ func registerMetrics(register prometheus.Registerer, info, timestamp *prometheus
 func newHelmStatsHandler(config config.Config, synchrone bool) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if synchrone {
-			runStats(config, statsInfo, statsTimestamp,statsOutdated)
+			runStats(config, statsInfo, statsTimestamp, statsOutdated)
 		} else {
 			mutex.RLock()
 			defer mutex.RUnlock()
