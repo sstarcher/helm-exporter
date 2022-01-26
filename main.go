@@ -270,13 +270,12 @@ func informer() {
 			for _, re := range namespacesIgnoreRe {
 				if re.FindString(mObj.GetName()) != "" {
 					shouldConnect = false
+					log.Infof("Namespace %s is in ignore list", mObj.GetName())
 					break
 				}
 			}
 			if shouldConnect {
 				connect(mObj.GetName())
-			} else {
-				log.Infof("Namespace %s is in ignore list", mObj.GetName())
 			}
 		},
 		DeleteFunc: func(obj interface{}) {
