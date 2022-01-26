@@ -1,5 +1,7 @@
 # Specifies which namespaces to query for helm 3 metrics.  Defaults to all
 namespaces: ""
+# you can specify namespaces to ignore - comma separated list of regexps
+namespacesIgnore: ""
 infoMetric: true
 timestampMetric: true
 latestChartVersion: true
