@@ -50,6 +50,10 @@ spec:
             - "-namespaces"
             - {{ .Values.namespaces | quote }}
             {{- end }}
+            {{- if .Values.namespacesIgnore }}
+            - "-namespaces-ignore"
+            - {{ .Values.namespacesIgnore | quote }}
+            {{- end }}
             {{- if not .Values.infoMetric }}
             - "-info-metric=false"
             {{- end }}
