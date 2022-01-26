@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"net/http"
+	"regexp"
 	"strconv"
 	"strings"
 	"sync"
@@ -45,8 +46,9 @@ var (
 	statsTimestamp *prometheus.GaugeVec
 	statsOutdated  *prometheus.GaugeVec
 
-	namespaces = flag.String("namespaces", "", "namespaces to monitor.  Defaults to all")
-	configFile = flag.String("config", "", "Configfile to load for helm overwrite registries.  Default is empty")
+	namespaces       = flag.String("namespaces", "", "namespaces to monitor.  Defaults to all")
+	namespacesIgnore = flag.String("namespaces-ignore", "", "namespaces to ignore.  Defaults to none")
+	configFile       = flag.String("config", "", "Configfile to load for helm overwrite registries.  Default is empty")
 
 	intervalDuration = flag.String("interval-duration", "0", "Enable metrics gathering in background, each given duration. If not provided, the helm stats are computed synchronously.  Default is 0")
 
@@ -263,7 +265,23 @@ func informer() {
 			// "k8s.io/apimachinery/pkg/apis/meta/v1" provides an Object
 			// interface that allows us to get metadata easily
 			mObj := obj.(v1.Object)
-			connect(mObj.GetName())
+			if namespacesIgnore == nil || *namespacesIgnore == "" {
+				connect(mObj.GetName())
+			} else {
+				ignore := false
+				for _, namespace := range strings.Split(*namespacesIgnore, ",") {
+					match, err := regexp.MatchString(namespace, mObj.GetName())
+					if err != nil {
+						log.Infof("Regexp error : %s", err)
+					} else if match {
+						log.Infof("Namespace %s is in ignore list", mObj.GetName())
+						ignore = true
+					}
+				}
+				if !ignore {
+					connect(mObj.GetName())
+				}
+			}
 		},
 		DeleteFunc: func(obj interface{}) {
 			mObj := obj.(v1.Object)
