@@ -1,12 +1,18 @@
 package registries
 
 import (
-	"net/http"
-
-	"gopkg.in/yaml.v2"
+	"context"
+	"github.com/sstarcher/helm-exporter/versioning"
+	"helm.sh/helm/v3/pkg/action"
+	"helm.sh/helm/v3/pkg/cli"
+	"helm.sh/helm/v3/pkg/getter"
+	"helm.sh/helm/v3/pkg/repo"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
+	"os"
+	"strings"
 
 	log "github.com/sirupsen/logrus"
-	"github.com/sstarcher/helm-exporter/versioning"
 )
 
 // IndexEntries contains configured Helm indexes
@@ -20,29 +26,71 @@ type IndexEntry struct {
 	Version string `yaml:"version"`
 }
 
+const indexYamlSuffix = "/index.yaml"
+
+var clientSet kubernetes.Interface
+var settings *cli.EnvSettings
+
+func init() {
+	settings = cli.New()
+	actionConfig := new(action.Configuration)
+	if err := actionConfig.Init(settings.RESTClientGetter(), settings.Namespace(), os.Getenv("HELM_DRIVER"), log.Printf); err != nil {
+		log.Warning(err)
+	}
+
+	var err error
+	clientSet, err = actionConfig.KubernetesClientSet()
+	if err != nil {
+		log.Warning(err)
+	}
+}
+
 func (r HelmOverrideRegistry) getChartVersions(chart string) string {
-	resp, err := http.Get(r.HelmRegistry.URL)
-	if err != nil {
-		log.WithError(err).WithField("chart", chart).WithField("registry", r.HelmRegistry.URL).Error("Failed to get chart info")
+
+	// trim the index.yaml suffix from the chart url, just to avoid breaking changes.
+	url := strings.TrimSuffix(r.HelmRegistry.URL, indexYamlSuffix)
+
+	entry := &repo.Entry{
+		Name: chart,
+		URL:  url,
+	}
+
+	if clientSet == nil {
+		log.Warning("kubernetes ClientSet is not initialized")
 		return versioning.Failure
 	}
-	defer resp.Body.Close()
 
-	index := IndexEntries{}
-	err = yaml.NewDecoder(resp.Body).Decode(&index)
+	if r.HelmRegistry.SecretRef != nil {
+		secrets, err := clientSet.CoreV1().Secrets(settings.Namespace()).Get(context.Background(), r.HelmRegistry.SecretRef.Name, v1.GetOptions{})
+		if err != nil {
+			log.Warning(err)
+			return versioning.Failure
+		}
+		entry.Username = string(secrets.Data[r.HelmRegistry.SecretRef.UserKey])
+		entry.Password = string(secrets.Data[r.HelmRegistry.SecretRef.PassKey])
+	}
+
+	provider := getter.All(settings)
+
+	chartRepo, err := repo.NewChartRepository(entry, provider)
 	if err != nil {
-		log.WithError(err).WithField("chart", chart).WithField("registry", r.HelmRegistry.URL).Error("Failed to unmarshal chart info")
+		log.Warning(err)
 		return versioning.Failure
 	}
-
-	var versions []string
-	entries := index.Entries[chart]
-	if entries == nil {
-		return versioning.Notfound
+	idx, err := chartRepo.DownloadIndexFile()
+	if err != nil {
+		log.Warning(err)
+		return versioning.Failure
 	}
-	for _, entry := range entries {
-		versions = append(versions, entry.Version)
+	repoIndex, err := repo.LoadIndexFile(idx)
+	if err != nil {
+		log.Warning(err)
+		return versioning.Failure
 	}
-
-	return versioning.FindHighestVersionInList(versions, r.AllowAllReleases)
+	chartVersion, err := repoIndex.Get(chart, "")
+	if err != nil {
+		log.Warning(err)
+		return versioning.Failure
+	}
+	return chartVersion.Version
 }
