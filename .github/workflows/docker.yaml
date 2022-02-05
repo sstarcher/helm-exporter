@@ -3,8 +3,7 @@ name: 'build images'
 
 on:
   push:
-    branches:
-      - ['test']
+    branches: [ test ]
 
 jobs:
   docker:
