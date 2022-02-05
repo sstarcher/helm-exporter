@@ -18,50 +18,52 @@ Exporter for helm metrics
 
 ## Values
 
-| Key | Type | Default | Description |
-|-----|------|---------|-------------|
-| affinity | object | `{}` |  |
-| config.helmRegistries.overrideChartNames | object | `{}` |  |
-| config.helmRegistries.override[0].allowAllReleases | bool | `true` |  |
-| config.helmRegistries.override[0].charts | list | `[]` |  |
-| config.helmRegistries.override[0].registry.url | string | `""` |  |
-| config.helmRegistries.registryNames | list | `[]` |  |
-| env | list | `[]` |  |
-| fullnameOverride | string | `""` |  |
-| image.pullPolicy | string | `"Always"` |  |
-| image.repository | string | `"sstarcher/helm-exporter"` |  |
-| image.tag | string | `""` |  |
-| imagePullSecrets | list | `[]` |  |
-| infoMetric | bool | `true` |  |
-| ingress.annotations | object | `{}` |  |
-| ingress.enabled | bool | `false` |  |
-| ingress.hosts[0].host | string | `"chart-example.local"` |  |
-| ingress.hosts[0].paths | list | `[]` |  |
-| ingress.tls | list | `[]` |  |
-| intervalDuration | int | `0` |  |
-| latestChartVersion | bool | `true` |  |
-| nameOverride | string | `""` |  |
-| namespaces | string | `""` |  |
-| nodeSelector | object | `{}` |  |
-| podAnnotations | object | `{}` |  |
-| podLabels | object | `{}` |  |
-| podSecurityContext | object | `{}` |  |
-| rbac.create | bool | `true` |  |
-| replicaCount | int | `1` |  |
-| resources | object | `{}` |  |
-| securityContext | object | `{}` |  |
-| service.annotations | object | `{}` |  |
-| service.port | int | `9571` |  |
-| service.type | string | `"ClusterIP"` |  |
-| serviceAccount.create | bool | `true` |  |
-| serviceAccount.name | string | `nil` |  |
-| serviceMonitor.additionalLabels | object | `{}` |  |
-| serviceMonitor.create | bool | `false` |  |
-| serviceMonitor.interval | string | `nil` |  |
-| serviceMonitor.namespace | string | `nil` |  |
-| serviceMonitor.scrapeTimeout | string | `nil` |  |
-| timestampMetric | bool | `true` |  |
-| tolerations | list | `[]` |  |
+| Key                                                | Type   | Default                     | Description                                                    |
+|----------------------------------------------------|--------|-----------------------------|----------------------------------------------------------------|
+| affinity                                           | object | `{}`                        |                                                                |
+| config.helmRegistries.overrideChartNames           | object | `{}`                        |                                                                |
+| config.helmRegistries.override[0].allowAllReleases | bool   | `true`                      |                                                                |
+| config.helmRegistries.override[0].charts           | list   | `[]`                        |                                                                |
+| config.helmRegistries.override[0].registry.url     | string | `""`                        |                                                                |
+| config.helmRegistries.registryNames                | list   | `[]`                        |                                                                |
+| env                                                | list   | `[]`                        |                                                                |
+| fullnameOverride                                   | string | `""`                        |                                                                |
+| image.pullPolicy                                   | string | `"Always"`                  |                                                                |
+| image.repository                                   | string | `"sstarcher/helm-exporter"` |                                                                |
+| image.tag                                          | string | `""`                        |                                                                |
+| imagePullSecrets                                   | list   | `[]`                        |                                                                |
+| infoMetric                                         | bool   | `true`                      |                                                                |
+| ingress.annotations                                | object | `{}`                        |                                                                |
+| ingress.enabled                                    | bool   | `false`                     |                                                                |
+| ingress.hosts[0].host                              | string | `"chart-example.local"`     |                                                                |
+| ingress.hosts[0].paths                             | list   | `[]`                        |                                                                |
+| ingress.tls                                        | list   | `[]`                        |                                                                |
+| intervalDuration                                   | int    | `0`                         |                                                                |
+| latestChartVersion                                 | bool   | `true`                      |                                                                |
+| nameOverride                                       | string | `""`                        |                                                                |
+| namespaces                                         | string | `""`                        |                                                                |
+| nodeSelector                                       | object | `{}`                        |                                                                |
+| podAnnotations                                     | object | `{}`                        |                                                                |
+| podLabels                                          | object | `{}`                        |                                                                |
+| podSecurityContext                                 | object | `{}`                        |                                                                |
+| rbac.create                                        | bool   | `true`                      |                                                                |
+| replicaCount                                       | int    | `1`                         |                                                                |
+| resources                                          | object | `{}`                        |                                                                |
+| securityContext                                    | object | `{}`                        |                                                                |
+| service.annotations                                | object | `{}`                        |                                                                |
+| service.port                                       | int    | `9571`                      |                                                                |
+| service.type                                       | string | `"ClusterIP"`               |                                                                |
+| serviceAccount.create                              | bool   | `true`                      |                                                                |
+| serviceAccount.name                                | string | `nil`                       |                                                                |
+| serviceMonitor.additionalLabels                    | object | `{}`                        |                                                                |
+| serviceMonitor.create                              | bool   | `false`                     |                                                                |
+| serviceMonitor.interval                            | string | `nil`                       |                                                                |
+| serviceMonitor.namespace                           | string | `nil`                       |                                                                |
+| serviceMonitor.scrapeTimeout                       | string | `nil`                       |                                                                |
+| timestampMetric                                    | bool   | `true`                      |                                                                |
+| tolerations                                        | list   | `[]`                        |                                                                |
+| grafanaDashboard.enabled                           | bool   | `false`                     | Specifies whether a Grafana dashboard should be created        |
+| grafanaDashboard.namespace                         | bool   | `nil`                       | Specifies then namespace where the dashboard should be created |
 
 ----------------------------------------------
 Autogenerated from chart metadata using [helm-docs v1.5.0](https://github.com/norwoodj/helm-docs/releases/v1.5.0)
