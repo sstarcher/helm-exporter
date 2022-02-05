@@ -9,7 +9,7 @@ import (
 	"sync"
 	"time"
 
-	semver "github.com/Masterminds/semver"
+	"github.com/Masterminds/semver"
 
 	"github.com/sstarcher/helm-exporter/config"
 

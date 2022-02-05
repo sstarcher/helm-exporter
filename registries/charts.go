@@ -22,9 +22,17 @@ type HelmOverrideRegistry struct {
 	AllowAllReleases bool         `koanf:"allowAllReleases"`
 }
 
+// SecretRef contains information about a secret
+type SecretRef struct {
+	Name    string `yaml:"name"`
+	UserKey string `yaml:"userKey"`
+	PassKey string `yaml:"passKey"`
+}
+
 // HelmRegistry contains information about the helm registry
 type HelmRegistry struct {
-	URL string `koanf:"url"`
+	URL       string     `koanf:"url"`
+	SecretRef *SecretRef `koanf:"secretRef"`
 }
 
 // GetLatestVersionFromHelm fetches the latest version of the helm chart
