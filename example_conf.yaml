@@ -1,3 +1,25 @@
 helmRegistries:
   registryNames:
-  - bitnami
+    - bitnami
+  override:
+    - registry:
+        url: "http://localhost:8080/index.yaml" # Url to the index file
+        secretRef:
+          name: "chartmuseum" # Name of the secret containing the username and password
+          userKey: "username" # Key of the username in the secret
+          passKey: "password" # Key of the password in the secret
+      charts: # Chart names
+        - azure-pipelines-agent
+        - starboard-exporter
+    - registry:
+        url: "http://localhost:8080" # Url to the index file
+        secretRef:
+          name: "chartmuseum" # Name of the secret containing the username and password
+          userKey: "username" # Key of the username in the secret
+          passKey: "password" # Key of the password in the secret
+      charts: # Chart names
+        - starboard-operator
+    - registry:
+        url: "https://aquasecurity.github.io/helm-charts/" # Url to the index file
+      charts: # Chart names
+        - test

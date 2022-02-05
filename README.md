@@ -44,11 +44,42 @@ config:
 # Currently only index.yaml registry is supported (helm supports other registries as well)
     override:
       - registry:
-          url: "https://some.url/index.yaml" # Url to the index file
+          url: "https://some.url" # Url to the index file
         charts: # Chart names
         - splunk
         - falco-eks-audit-bridge
 ```
+
+## Configuration for password protected registries
+
+If the registry needs authentication then you can use a Kubernetes secret to store the username and password.
+
+```bash
+kubectl create secret generic chartmuseum --from-literal=username=admin --from-literal=password=admin
+```
+
+And use following configuration:
+
+```yaml
+# Helm configuration
+config:
+  helmRegistries:
+    overrideChartNames: {}
+      mysql: stable/test
+    # If the helm charts are not stored on hub.helm.sh then a custom registry can be configured here.
+    # Currently only index.yaml registry is supported (helm supports other registries as well)
+    override:
+      - registry:
+          url: "https://some.url" # Url to the index file
+          secretRef:
+              name: "chartmuseum" # Name of the secret containing the username and password
+              userKey: "username" # Key of the username in the secret
+              passKey: "password" # Key of the password in the secret
+        charts: # Chart names
+          - splunk
+          - falco-eks-audit-bridge
+```
+
 
 * Query https://artifacthub.io for the chart matching your chart name and only using the specified registries.  If no registry name is specified and multiple charts match from helm hub no version will be found and it will log a warning.
 ```yaml
