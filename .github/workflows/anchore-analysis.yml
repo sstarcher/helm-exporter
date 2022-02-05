@@ -40,3 +40,5 @@ jobs:
       uses: anchore/scan-action@v3
       with:
         image: "localbuild/testimage:latest"
+        severity-cutoff: high
+
