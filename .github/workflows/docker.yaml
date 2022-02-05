@@ -1,0 +1,14 @@
+---
+name: 'build images'
+
+on:
+  push:
+    branches:
+      - ['test']
+
+jobs:
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
