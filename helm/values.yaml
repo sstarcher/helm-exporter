@@ -15,6 +15,12 @@ serviceMonitor:
   namespace:
   additionalLabels: {}
 
+grafanaDashboard:
+  # Specifies whether a Grafana dashboard should be created
+  enabled: false
+  # Specifies then namespace where the dashboard should be created
+  # namespace:
+
 replicaCount: 1
 
 image:
