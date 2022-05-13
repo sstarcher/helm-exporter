@@ -40,6 +40,7 @@ Exporter for helm metrics
 | ingress.tls                                        | list   | `[]`                        |                                                                |
 | intervalDuration                                   | int    | `0`                         |                                                                |
 | latestChartVersion                                 | bool   | `true`                      |                                                                |
+| livenessProbe                                      | object | (see `values.yaml`)         |  Liveness probe configuration                                  |
 | nameOverride                                       | string | `""`                        |                                                                |
 | namespaces                                         | string | `""`                        |                                                                |
 | nodeSelector                                       | object | `{}`                        |                                                                |
@@ -47,6 +48,7 @@ Exporter for helm metrics
 | podLabels                                          | object | `{}`                        |                                                                |
 | podSecurityContext                                 | object | `{}`                        |                                                                |
 | rbac.create                                        | bool   | `true`                      |                                                                |
+| readinessProbe                                     | object | (see `values.yaml`)         |  Readiness probe configuration                                 |
 | replicaCount                                       | int    | `1`                         |                                                                |
 | resources                                          | object | `{}`                        |                                                                |
 | securityContext                                    | object | `{}`                        |                                                                |
@@ -60,6 +62,7 @@ Exporter for helm metrics
 | serviceMonitor.interval                            | string | `nil`                       |                                                                |
 | serviceMonitor.namespace                           | string | `nil`                       |                                                                |
 | serviceMonitor.scrapeTimeout                       | string | `nil`                       |                                                                |
+| startupProbe                                       | object | (see `values.yaml`)         |  Startup probe configuration                                   |
 | timestampMetric                                    | bool   | `true`                      |                                                                |
 | tolerations                                        | list   | `[]`                        |                                                                |
 | grafanaDashboard.enabled                           | bool   | `false`                     | Specifies whether a Grafana dashboard should be created        |

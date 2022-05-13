@@ -33,6 +33,24 @@ imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
 
+# Liveness probe configuration
+livenessProbe:
+  httpGet:
+    path: /healthz
+    port: http
+
+# Readiness probe configuration
+readinessProbe:
+  httpGet:
+    path: /healthz
+    port: http
+
+# Startup probe configuration
+startupProbe:
+  httpGet:
+    path: /healthz
+    port: http
+
 rbac:
   create: true
 
