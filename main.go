@@ -12,6 +12,7 @@ import (
 	"github.com/Masterminds/semver"
 
 	"github.com/sstarcher/helm-exporter/config"
+	"github.com/sstarcher/helm-exporter/registries"
 
 	cmap "github.com/orcaman/concurrent-map"
 
@@ -297,6 +298,9 @@ func main() {
 	}
 
 	config := config.New(*configFile)
+	if *fetchLatest {
+		registries.Update()
+	}
 	runIntervalDuration, err := time.ParseDuration(*intervalDuration)
 	if err != nil {
 		log.Fatalf("invalid duration `%s`: %s", *intervalDuration, err)
