@@ -56,7 +56,7 @@ func httpGet(endpoint string, data interface{}) error {
 	return json.NewDecoder(resp.Body).Decode(data)
 }
 
-func init() {
+func Update() {
 	err := update()
 	if err != nil {
 		log.Warnf("failed to update artifacthub cache due to %v ", err)
