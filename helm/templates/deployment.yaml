@@ -63,6 +63,9 @@ spec:
             {{- if not .Values.latestChartVersion }}
             - "-latest-chart-version=false"
             {{- end }}
+            {{- if .Values.statusInMetric }}
+            - "-status-in-metric=true"
+            {{- end }}
             {{- with .Values.intervalDuration }}
             - "-interval-duration={{ . }}"
             {{- end }}
