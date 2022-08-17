@@ -60,6 +60,8 @@ var (
 
 	fetchLatest = flag.Bool("latest-chart-version", true, "Attempt to fetch the latest chart version from registries. Defaults to true")
 
+	statusInMetric = flag.Bool("status-in-metric", false, "Adds the status to the metric as a label. Defaults to false")
+
 	verbose = flag.Bool("verbose", false, "Enables debug logging. Defaults to false")
 
 	statusCodeMap = map[string]float64{
@@ -73,16 +75,24 @@ var (
 		"pending-upgrade":  7,
 		"pending-rollback": 8,
 	}
+	statusCodeMapToStr = map[float64]string{
+		0:  "unknown",
+		1:  "deployed",
+		2:  "uninstalled",
+		3:  "superseded",
+		-1: "failed",
+		5:  "uninstalling",
+		6:  "pending-install",
+		7:  "pending-upgrade",
+		8:  "pending-rollback",
+	}
 
 	prometheusHandler = promhttp.Handler()
 )
 
 func configureMetrics() (info *prometheus.GaugeVec, timestamp *prometheus.GaugeVec, outdated *prometheus.GaugeVec) {
 	if *infoMetric == true {
-		info = prometheus.NewGaugeVec(prometheus.GaugeOpts{
-			Name: "helm_chart_info",
-			Help: "Information on helm releases",
-		}, []string{
+		infoLabels := []string{
 			"chart",
 			"release",
 			"version",
@@ -91,7 +101,15 @@ func configureMetrics() (info *prometheus.GaugeVec, timestamp *prometheus.GaugeV
 			"updated",
 			"namespace",
 			"latestVersion",
-			"description"})
+			"description"}
+		if *statusInMetric {
+			infoLabels = append(infoLabels, "status")
+		}
+
+		info = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+			Name: "helm_chart_info",
+			Help: "Information on helm releases",
+		}, infoLabels)
 	}
 
 	if *timestampMetric == true {
@@ -151,6 +169,7 @@ func runStats(config config.Config, info *prometheus.GaugeVec, timestamp *promet
 			updated := item.Info.LastDeployed.Unix() * 1000
 			namespace := item.Namespace
 			status := statusCodeMap[item.Info.Status.String()]
+			statusStr := statusCodeMapToStr[status]
 			revision := item.Version
 			description := item.Info.Description
 			latestVersion := ""
@@ -176,8 +195,23 @@ func runStats(config config.Config, info *prometheus.GaugeVec, timestamp *promet
 			}
 
 			if info != nil {
-				info.WithLabelValues(chart, releaseName, version, appVersion, strconv.FormatInt(int64(revision), 10), strconv.FormatInt(updated, 10), namespace, latestVersion, description).Set(status)
+				labelValues := []string{
+					chart,
+					releaseName,
+					version,
+					appVersion,
+					strconv.FormatInt(int64(revision), 10),
+					strconv.FormatInt(updated, 10),
+					namespace,
+					latestVersion,
+					description,
+				}
+				if *statusInMetric {
+					labelValues = append(labelValues, statusStr)
+				}
+				info.WithLabelValues(labelValues...).Set(status)
 			}
+
 			if timestamp != nil {
 				timestamp.WithLabelValues(chart, releaseName, version, appVersion, strconv.FormatInt(updated, 10), namespace, latestVersion).Set(float64(updated))
 			}

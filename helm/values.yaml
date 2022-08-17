@@ -5,6 +5,7 @@ namespacesIgnore: ""
 infoMetric: true
 timestampMetric: true
 latestChartVersion: true
+statusInMetric: false
 intervalDuration: 0
 
 serviceMonitor:
