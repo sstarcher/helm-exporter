@@ -27,7 +27,7 @@ _See [helm repo](https://hub.helm.sh/charts/sstarcher/helm-exporter) for command
 $ helm install helm-exporter sstarcher/helm-exporter
 ```
 * `helm install helm-exporter sstarcher/helm-exporter` will install and metrics should scrape automatically if prometheus is running
-* If using Grafana you can use this Dashboard to have a list of what's running https://grafana.com/dashboards/9367
+* If using Grafana you can use this Dashboard to have a list of what's running https://grafana.com/grafana/dashboards/9367-helm-exporter
 
 ## Configuration for Latest versions
 
