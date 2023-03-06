@@ -8,7 +8,7 @@ jobs:
   chart:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 
     - run: git fetch --prune --unshallow
 
@@ -16,7 +16,7 @@ jobs:
       with:
         go-version: 1.19
 
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         repository: sstarcher/helm-charts
         token: ${{ secrets.ACCESS_TOKEN }}
