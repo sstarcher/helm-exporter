@@ -232,23 +232,30 @@ func registerMetrics(register prometheus.Registerer, info, timestamp *prometheus
 	mutex.Lock()
 	defer mutex.Unlock()
 
-	if statsInfo != nil {
-		register.Unregister(statsInfo)
+	if *infoMetric == true {
+		if statsInfo != nil {
+			register.Unregister(statsInfo)
+		}
+		register.MustRegister(info)
+		statsInfo = info
 	}
-	register.MustRegister(info)
-	statsInfo = info
 
-	if statsTimestamp != nil {
-		register.Unregister(statsTimestamp)
+	if *timestampMetric == true {
+		if statsTimestamp != nil {
+			register.Unregister(statsTimestamp)
+		}
+		register.MustRegister(timestamp)
+		statsTimestamp = timestamp
 	}
-	register.MustRegister(timestamp)
-	statsTimestamp = timestamp
 
-	if statsOutdated != nil {
-		register.Unregister(statsOutdated)
+	if *outdatedMetric == true {
+		if statsOutdated != nil {
+			register.Unregister(statsOutdated)
+		}
+		register.MustRegister(outdated)
+		statsOutdated = outdated
 	}
-	register.MustRegister(outdated)
-	statsOutdated = outdated
+
 }
 
 func newHelmStatsHandler(config config.Config, synchrone bool) http.HandlerFunc {
