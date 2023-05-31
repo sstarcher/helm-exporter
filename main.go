@@ -365,6 +365,16 @@ func main() {
 	}
 
 	if runIntervalDuration != 0 {
+		// wait for the clients to be found, before the initial start of collecting metrics
+		var previousClientsCount int
+		for {
+			currentClientsCount := clients.Count()
+			if previousClientsCount == currentClientsCount && currentClientsCount > 0 {
+				break
+			}
+			previousClientsCount = currentClientsCount
+			time.Sleep(5 * time.Second)
+		}
 		go runStatsPeriodically(runIntervalDuration, config)
 	} else {
 		info, timestamp, outdated := configureMetrics()
