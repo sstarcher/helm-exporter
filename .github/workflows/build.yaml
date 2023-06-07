@@ -9,8 +9,6 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    env:
-      GOPATH: ${{ github.workspace }}
     steps:
     - uses: actions/setup-go@v4
       with:
