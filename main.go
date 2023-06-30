@@ -155,6 +155,8 @@ func runStats(config config.Config, info *prometheus.GaugeVec, timestamp *promet
 
 	for _, client := range clients.Items() {
 		list := action.NewList(client.(*action.Configuration))
+		list.All = true
+		list.SetStateMask()
 		items, err := list.Run()
 		if err != nil {
 			log.Warnf("got error while listing %v", err)
