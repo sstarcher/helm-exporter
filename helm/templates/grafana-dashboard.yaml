@@ -11,7 +11,7 @@ metadata:
   namespace: {{ .Release.Namespace }}
   {{- end}}
   annotations:
-    {{- with .Values.grafanaDashboard.DashboardAnnotations }}
+    {{- with .Values.grafanaDashboard.dashboardAnnotations }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
 data:

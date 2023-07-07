@@ -24,7 +24,7 @@ grafanaDashboard:
   # Specifies then namespace where the dashboard should be created
   # namespace:
   # Add annotations to Configmap for Grafana dashboard
-  DashboardAnnotations: {}
+  dashboardAnnotations: {}
     # k8s-sidecar-target-directory: /tmp/dashboards/myfolder  
 
 replicaCount: 1
