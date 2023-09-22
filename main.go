@@ -62,7 +62,7 @@ var (
 
 	statusInMetric = flag.Bool("status-in-metric", false, "Adds the status to the metric as a label. Defaults to false")
 
-	verbose = flag.Bool("verbose", false, "Enables debug logging. Defaults to false")
+	logLevel = flag.String("log-level", "error", "Sets log level. Defaults to Error")
 
 	statusCodeMap = map[string]float64{
 		"unknown":          0,
@@ -336,9 +336,7 @@ func main() {
 	flagenv.Parse()
 	flag.Parse()
 
-	if *verbose == true {
-		logrus.SetLevel(logrus.DebugLevel)
-	}
+	logrus.SetLevel(logrus.ParseLevel(logLevel))
 
 	config := config.New(*configFile)
 	if *fetchLatest {
