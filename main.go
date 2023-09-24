@@ -336,7 +336,11 @@ func main() {
 	flagenv.Parse()
 	flag.Parse()
 
-	logrus.SetLevel(logrus.ParseLevel(logLevel))
+	logrusLevel, err := logrus.ParseLevel(*logLevel)
+	if err != nil {
+		log.Fatalf("Wrong log level provided: %s", err)
+	}
+	logrus.SetLevel(logrusLevel)
 
 	config := config.New(*configFile)
 	if *fetchLatest {
