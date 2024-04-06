@@ -1,2 +1,4 @@
 helm/helm-exporter*.tgz
 .idea/
+
+dist/
