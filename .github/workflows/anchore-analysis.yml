@@ -4,38 +4,38 @@
 # and parameters, see https://github.com/anchore/scan-action. For more
 # information on Anchore's container image scanning tool Grype, see
 # https://github.com/anchore/grype
-name: Anchore Container Scan
+# name: Anchore Container Scan
 
-on:
-  push:
-    branches: [ master ]
-  pull_request:
-    # The branches below must be a subset of the branches above
-    branches: [ master ]
-  schedule:
-    - cron: '31 6 * * 0'
+# on:
+#   push:
+#     branches: [ master ]
+#   pull_request:
+#     # The branches below must be a subset of the branches above
+#     branches: [ master ]
+#   schedule:
+#     - cron: '31 6 * * 0'
 
-jobs:
-  Anchore-Build-Scan:
-    runs-on: ubuntu-latest
-    steps:
-    - name: Checkout the code
-      uses: actions/checkout@v4
-    - name: Build the Docker image
-      run: docker build . --file Dockerfile --tag localbuild/testimage:latest
-    - name: Run the Anchore scan action itself with GitHub Advanced Security code scanning integration enabled
-      uses: anchore/scan-action@v5
-      id: scan
-      with:
-        image: "localbuild/testimage:latest"
-        fail-build: false
-    - name: Upload Anchore Scan Report
-      uses: github/codeql-action/upload-sarif@v3
-      with:
-        sarif_file: ${{ steps.scan.outputs.sarif }}
-    - name: Fail build if scan has vulns
-      uses: anchore/scan-action@v5
-      with:
-        image: "localbuild/testimage:latest"
-        severity-cutoff: critical
+# jobs:
+#   Anchore-Build-Scan:
+#     runs-on: ubuntu-latest
+#     steps:
+#     - name: Checkout the code
+#       uses: actions/checkout@v4
+#     - name: Build the Docker image
+#       run: docker build . --file Dockerfile --tag localbuild/testimage:latest
+#     - name: Run the Anchore scan action itself with GitHub Advanced Security code scanning integration enabled
+#       uses: anchore/scan-action@v5
+#       id: scan
+#       with:
+#         image: "localbuild/testimage:latest"
+#         fail-build: false
+#     - name: Upload Anchore Scan Report
+#       uses: github/codeql-action/upload-sarif@v3
+#       with:
+#         sarif_file: ${{ steps.scan.outputs.sarif }}
+#     - name: Fail build if scan has vulns
+#       uses: anchore/scan-action@v5
+#       with:
+#         image: "localbuild/testimage:latest"
+#         severity-cutoff: critical
 
