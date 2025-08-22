@@ -3,6 +3,7 @@ namespaces: ""
 # you can specify namespaces to ignore - comma separated list of regexps
 namespacesIgnore: ""
 infoMetric: true
+historyMetric: false
 timestampMetric: true
 latestChartVersion: true
 statusInMetric: false

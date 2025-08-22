@@ -44,6 +44,7 @@ var (
 	mutex = sync.RWMutex{}
 
 	statsInfo      *prometheus.GaugeVec
+	statsHistory   *prometheus.GaugeVec
 	statsTimestamp *prometheus.GaugeVec
 	statsOutdated  *prometheus.GaugeVec
 
@@ -55,6 +56,7 @@ var (
 	intervalDuration = flag.String("interval-duration", "0", "Enable metrics gathering in background, each given duration. If not provided, the helm stats are computed synchronously.  Default is 0")
 
 	infoMetric      = flag.Bool("info-metric", true, "Generate info metric.  Defaults to true")
+	historyMetric   = flag.Bool("history-metric", false, "Generate history metric.  Defaults to true")
 	timestampMetric = flag.Bool("timestamp-metric", true, "Generate timestamps metric.  Defaults to true")
 	outdatedMetric  = flag.Bool("outdated-metric", true, "Generate version outdated metric.  Defaults to true")
 
@@ -90,7 +92,7 @@ var (
 	prometheusHandler = promhttp.Handler()
 )
 
-func configureMetrics() (info *prometheus.GaugeVec, timestamp *prometheus.GaugeVec, outdated *prometheus.GaugeVec) {
+func configureMetrics() (info *prometheus.GaugeVec, history *prometheus.GaugeVec, timestamp *prometheus.GaugeVec, outdated *prometheus.GaugeVec) {
 	if *infoMetric == true {
 		infoLabels := []string{
 			"chart",
@@ -110,6 +112,26 @@ func configureMetrics() (info *prometheus.GaugeVec, timestamp *prometheus.GaugeV
 			Name: "helm_chart_info",
 			Help: "Information on helm releases",
 		}, infoLabels)
+	}
+
+	if *historyMetric == true {
+		historyLabels := []string{
+			"chart",
+			"release",
+			"version",
+			"appVersion",
+			"revision",
+			"updated",
+			"namespace",
+			"description"}
+		if *statusInMetric {
+			historyLabels = append(historyLabels, "status")
+		}
+
+		history = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+			Name: "helm_release_history",
+			Help: "History of helm releases",
+		}, historyLabels)
 	}
 
 	if *timestampMetric == true {
@@ -141,9 +163,12 @@ func configureMetrics() (info *prometheus.GaugeVec, timestamp *prometheus.GaugeV
 	return
 }
 
-func runStats(config config.Config, info *prometheus.GaugeVec, timestamp *prometheus.GaugeVec, outdated *prometheus.GaugeVec) {
+func runStats(config config.Config, info, history, timestamp, outdated *prometheus.GaugeVec) {
 	if info != nil {
 		info.Reset()
+	}
+	if history != nil {
+		history.Reset()
 	}
 	if timestamp != nil {
 		timestamp.Reset()
@@ -175,6 +200,43 @@ func runStats(config config.Config, info *prometheus.GaugeVec, timestamp *promet
 			revision := item.Version
 			description := item.Info.Description
 			latestVersion := ""
+
+			if history != nil {
+				helmHistory := action.NewHistory(client.(*action.Configuration))
+				helmReleases, err := helmHistory.Run(releaseName)
+				if err != nil {
+					log.Warnf("got error while fetching history %v", err)
+					continue
+				}
+
+				for _, helmRelease := range helmReleases {
+					historyChart := helmRelease.Chart.Name()
+					historyReleaseName := helmRelease.Name
+					historyVersion := helmRelease.Chart.Metadata.Version
+					historyAppVersion := helmRelease.Chart.AppVersion()
+					historyUpdated := helmRelease.Info.LastDeployed.Unix() * 1000
+					historyNamespace := helmRelease.Namespace
+					historyStatus := statusCodeMap[helmRelease.Info.Status.String()]
+					historyStatusStr := statusCodeMapToStr[historyStatus]
+					historyRevision := helmRelease.Version
+					historyDescription := helmRelease.Info.Description
+
+					historyLabelValues := []string{
+						historyChart,
+						historyReleaseName,
+						historyVersion,
+						historyAppVersion,
+						strconv.FormatInt(int64(historyRevision), 10),
+						strconv.FormatInt(historyUpdated, 10),
+						historyNamespace,
+						historyDescription,
+					}
+					if *statusInMetric {
+						historyLabelValues = append(historyLabelValues, historyStatusStr)
+					}
+					history.WithLabelValues(historyLabelValues...).Set(status)
+				}
+			}
 
 			if *fetchLatest {
 				latestVersion = config.HelmRegistries.GetLatestVersionFromHelm(item.Chart.Name())
@@ -223,14 +285,14 @@ func runStats(config config.Config, info *prometheus.GaugeVec, timestamp *promet
 
 func runStatsPeriodically(interval time.Duration, config config.Config) {
 	for {
-		info, timestamp, outdated := configureMetrics()
-		runStats(config, info, timestamp, outdated)
-		registerMetrics(prometheus.DefaultRegisterer, info, timestamp, outdated)
+		info, history, timestamp, outdated := configureMetrics()
+		runStats(config, info, history, timestamp, outdated)
+		registerMetrics(prometheus.DefaultRegisterer, info, history, timestamp, outdated)
 		time.Sleep(interval)
 	}
 }
 
-func registerMetrics(register prometheus.Registerer, info, timestamp *prometheus.GaugeVec, outdated *prometheus.GaugeVec) {
+func registerMetrics(register prometheus.Registerer, info, history, timestamp, outdated *prometheus.GaugeVec) {
 	mutex.Lock()
 	defer mutex.Unlock()
 
@@ -240,6 +302,14 @@ func registerMetrics(register prometheus.Registerer, info, timestamp *prometheus
 		}
 		register.MustRegister(info)
 		statsInfo = info
+	}
+
+	if *historyMetric == true {
+		if statsHistory != nil {
+			register.Unregister(statsHistory)
+		}
+		register.MustRegister(history)
+		statsHistory = history
 	}
 
 	if *timestampMetric == true {
@@ -263,7 +333,7 @@ func registerMetrics(register prometheus.Registerer, info, timestamp *prometheus
 func newHelmStatsHandler(config config.Config, synchrone bool) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if synchrone {
-			runStats(config, statsInfo, statsTimestamp, statsOutdated)
+			runStats(config, statsInfo, statsHistory, statsTimestamp, statsOutdated)
 		} else {
 			mutex.RLock()
 			defer mutex.RUnlock()
@@ -381,8 +451,8 @@ func main() {
 		}
 		go runStatsPeriodically(runIntervalDuration, config)
 	} else {
-		info, timestamp, outdated := configureMetrics()
-		registerMetrics(prometheus.DefaultRegisterer, info, timestamp, outdated)
+		info, history, timestamp, outdated := configureMetrics()
+		registerMetrics(prometheus.DefaultRegisterer, info, history, timestamp, outdated)
 	}
 
 	http.HandleFunc("/metrics", newHelmStatsHandler(config, runIntervalDuration == 0))

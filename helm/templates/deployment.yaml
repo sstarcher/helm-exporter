@@ -58,6 +58,9 @@ spec:
             {{- if not .Values.infoMetric }}
             - "-info-metric=false"
             {{- end }}
+            {{- if .Values.historyMetric }}
+            - "-history-metric=true"
+            {{- end }}
             {{- if not .Values.timestampMetric }}
             - "-timestamp-metric=false"
             {{- end }}
