@@ -10,7 +10,7 @@ require (
 	github.com/orcaman/concurrent-map v1.0.0
 	github.com/prometheus/client_golang v1.16.0
 	github.com/sirupsen/logrus v1.9.3
-	helm.sh/helm/v3 v3.14.2
+	helm.sh/helm/v3 v3.19.2
 	k8s.io/apimachinery v0.29.0
 	k8s.io/client-go v0.29.0
 )
