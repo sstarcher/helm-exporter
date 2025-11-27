@@ -6,7 +6,7 @@
 # yaml-language-server: $schema=https://goreleaser.com/static/schema.json
 # vim: set ts=2 sw=2 tw=0 fo=cnqoj
 
-version: 1
+version: 2
 
 builds:
   - env:
@@ -19,7 +19,7 @@ builds:
       - goarch: arm64
 
 archives:
-  - format: tar.gz
+  - id: default
     # this name template makes the OS and Arch compatible with the results of `uname`.
     name_template: >-
       {{ .ProjectName }}_
@@ -28,7 +28,9 @@ archives:
       {{- else if eq .Arch "386" }}i386
       {{- else }}{{ .Arch }}{{ end }}
       {{- if .Arm }}v{{ .Arm }}{{ end }}
-    # use zip for windows archives
+    files:
+      - LICENSE
+      - README.md
     format_overrides:
       - goos: windows
         format: zip
