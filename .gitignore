@@ -1,4 +1,4 @@
 helm/helm-exporter*.tgz
 .idea/
-
+.claude/
 dist/
