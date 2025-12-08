@@ -73,6 +73,9 @@ spec:
             {{- with .Values.intervalDuration }}
             - "-interval-duration={{ . }}"
             {{- end }}
+            {{- with .Values.logLevel }}
+            - "-log-level={{ . }}"
+            {{- end }}
           {{- if .Values.env }}
           env:
 {{ toYaml .Values.env | indent 12}}
