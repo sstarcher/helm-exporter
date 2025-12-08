@@ -41,6 +41,7 @@ Exporter for helm metrics
 | intervalDuration                                   | int    | `0`                         |                                                                |
 | latestChartVersion                                 | bool   | `true`                      |                                                                |
 | livenessProbe                                      | object | (see `values.yaml`)         |  Liveness probe configuration                                  |
+| logLevel                                           | string | `"error"`                   |  Set log level (info,warning,error,debug)                      |
 | nameOverride                                       | string | `""`                        |                                                                |
 | namespaces                                         | string | `""`                        |                                                                |
 | nodeSelector                                       | object | `{}`                        |                                                                |

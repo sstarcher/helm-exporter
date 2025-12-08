@@ -8,6 +8,7 @@ timestampMetric: true
 latestChartVersion: true
 statusInMetric: false
 intervalDuration: 0
+logLevel: "error"
 
 serviceMonitor:
   # Specifies whether a ServiceMonitor should be created
