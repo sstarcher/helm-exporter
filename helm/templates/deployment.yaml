@@ -96,6 +96,8 @@ spec:
           volumeMounts:
             - mountPath: /config
               name: {{ include "helm-exporter.fullname" . }}
+            - mountPath: /.cache
+              name: cache
           {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
@@ -114,4 +116,6 @@ spec:
       - name: {{ include "helm-exporter.fullname" . }}
         configMap:
           name: {{ include "helm-exporter.fullname" . }}
+      - name: cache
+        emptyDir: {}
     {{- end }}
