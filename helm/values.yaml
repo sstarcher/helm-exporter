@@ -27,7 +27,7 @@ grafanaDashboard:
   # namespace:
   # Add annotations to Configmap for Grafana dashboard
   dashboardAnnotations: {}
-    # k8s-sidecar-target-directory: /tmp/dashboards/myfolder  
+    # k8s-sidecar-target-directory: /tmp/dashboards/myfolder
 
 replicaCount: 1
 
@@ -81,9 +81,12 @@ env: []
   #   value: localhost
 
 securityContext: {}
+  # allowPrivilegeEscalation: false
+  # seccompProfile:
+  #   type: RuntimeDefault
   # capabilities:
   #   drop:
-  #   - ALL
+  #     - ALL
   # readOnlyRootFilesystem: true
   # runAsNonRoot: true
   # runAsUser: 1000
