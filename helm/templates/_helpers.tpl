@@ -41,7 +41,10 @@ helm.sh/chart: {{ include "helm-exporter.chart" . }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
-{{- end -}}
+{{- with .Values.commonLabels -}}
+{{- toYaml . | nindent 0 }}
+{{- end }}
+{{- end }}
 
 {{/*
 Selector labels

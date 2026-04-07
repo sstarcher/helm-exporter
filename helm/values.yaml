@@ -10,6 +10,9 @@ statusInMetric: false
 intervalDuration: 0
 logLevel: "error"
 
+# commonLabels are labels that are applied to all deployed resources in the chart
+commonLabels: {}
+
 serviceMonitor:
   # Specifies whether a ServiceMonitor should be created
   create: false
