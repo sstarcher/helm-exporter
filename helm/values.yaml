@@ -6,6 +6,7 @@ infoMetric: true
 historyMetric: false
 timestampMetric: true
 latestChartVersion: true
+outdatedMetric: true
 statusInMetric: false
 intervalDuration: 0
 logLevel: "error"
