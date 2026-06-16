@@ -1,6 +1,6 @@
 module github.com/sstarcher/helm-exporter
 
-go 1.24.0
+go 1.26.0
 
 require (
 	github.com/Masterminds/semver v1.5.0
