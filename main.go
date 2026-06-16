@@ -254,7 +254,7 @@ func runStats(config config.Config, info, history, timestamp, outdated *promethe
 						}
 					}
 				} else {
-					log.WithField("chart", chart).WithField("version", version).WithField("latest", latestVersion).Error("%s", err)
+					log.WithField("chart", chart).WithField("version", version).WithField("latest", latestVersion).Errorf("%s", err)
 				}
 			}
 
