@@ -90,6 +90,27 @@ config:
     - bitnami
 ```
 
+## Configuration for OCI registries
+
+Registries can also be configured as OCI (Open Container Initiative) registries by prefixing the `url` with `oci://`. helm-exporter lists the tags published to the chart's OCI repository and reports the highest one as the latest version, the same way `helm pull oci://...` resolves chart versions.
+
+```yaml
+# Helm configuration
+config:
+  helmRegistries:
+    override:
+      - registry:
+          url: "oci://registry.example.com/helm" # OCI registry, no index.yaml involved
+        charts: # Chart names
+        - kube-prometheus-stack
+      - registry:
+          url: "oci://ghcr.io/prometheus-community/charts"
+        charts:
+        - kube-prometheus-stack
+```
+
+Private OCI registries are supported the same way `helm` itself supports them: run `helm registry login registry.example.com` on a host (or in an init step) before starting helm-exporter, or point `HELM_REGISTRY_CONFIG` at an existing Helm registry credentials file. helm-exporter does not introduce a separate authentication mechanism for OCI - it reuses whatever credentials the Helm CLI would use.
+
 # Metrics
 * http://host:9571/metrics
 

@@ -6,6 +6,7 @@ import (
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/cli"
 	"helm.sh/helm/v3/pkg/getter"
+	"helm.sh/helm/v3/pkg/registry"
 	"helm.sh/helm/v3/pkg/repo"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -45,8 +46,19 @@ func init() {
 	}
 }
 
+// getChartVersions is the single point in the codebase that decides which
+// chart-repository strategy to use for a registry: an OCI registry lookup
+// (tags on the repository) or the classic index.yaml lookup. Everything
+// else - HelmRegistries.GetLatestVersionFromHelm, the config format, the
+// metrics - stays unaware of the distinction.
 func (r HelmOverrideRegistry) getChartVersions(chart string) string {
+	if registry.IsOCI(r.HelmRegistry.URL) {
+		return r.getChartVersionsOCI(chart)
+	}
+	return r.getChartVersionsHTTP(chart)
+}
 
+func (r HelmOverrideRegistry) getChartVersionsHTTP(chart string) string {
 	// trim the index.yaml suffix from the chart url, just to avoid breaking changes.
 	url := strings.TrimSuffix(r.HelmRegistry.URL, indexYamlSuffix)
 
@@ -71,26 +83,29 @@ func (r HelmOverrideRegistry) getChartVersions(chart string) string {
 	}
 
 	provider := getter.All(settings)
-
 	chartRepo, err := repo.NewChartRepository(entry, provider)
 	if err != nil {
 		log.Warning(err)
 		return versioning.Failure
 	}
+
 	idx, err := chartRepo.DownloadIndexFile()
 	if err != nil {
 		log.Warning(err)
 		return versioning.Failure
 	}
+
 	repoIndex, err := repo.LoadIndexFile(idx)
 	if err != nil {
 		log.Warning(err)
 		return versioning.Failure
 	}
+
 	chartVersion, err := repoIndex.Get(chart, "")
 	if err != nil {
 		log.Warning(err)
 		return versioning.Failure
 	}
+
 	return chartVersion.Version
 }
