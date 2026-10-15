@@ -41,3 +41,7 @@ changelog:
     exclude:
       - "^docs:"
       - "^test:"
+
+release:
+  mode: keep-existing
+
